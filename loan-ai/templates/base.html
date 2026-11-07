@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LoanIQ - AI-Based Loan Eligibility & Risk Assessment System{% endblock %}</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans (Weights 400-800) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN with Custom Design Tokens -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            // Core Accent Palette
+            primary: {
+              DEFAULT: '#0d6efd',
+              50: '#edf5ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#0d6efd',
+              600: '#0b5ed7',
+              700: '#0a58ca',
+            },
+            secondary: {
+              DEFAULT: '#f97316',
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+            },
+            success: {
+              DEFAULT: '#10b981',
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+            },
+            pink: {
+              DEFAULT: '#ec4899',
+              50: '#fdf2f8',
+              100: '#fce7f3',
+              500: '#ec4899',
+              600: '#db2777',
+            },
+            purple: {
+              DEFAULT: '#a855f7',
+              50: '#faf5ff',
+              100: '#f3e8ff',
+              500: '#a855f7',
+              600: '#9333ea',
+            },
+            // Surfaces & Typography
+            surface: '#f8f9fc',
+            card: '#ffffff',
+            'border-card': '#f3f4f6',
+            'text-primary': '#1e293b',
+            'text-secondary': '#64748b',
+          },
+          borderRadius: {
+            'card': '24px',
+            'btn': '12px',
+          },
+          boxShadow: {
+            'card': '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+            'card-hover': '0 12px 28px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04)',
+            'cta': '0 10px 25px -5px rgba(13, 110, 253, 0.20)',
+            'cta-hover': '0 14px 28px -5px rgba(13, 110, 253, 0.32)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Custom Design System Stylesheet & Thin Scrollbars -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-surface text-text-primary antialiased min-h-screen flex items-center justify-center p-0 lg:p-4">
+
+  <!-- 3-Column App Shell (Max Width: 1440px Centered, Desktop Height: 900px) -->
+  <div class="w-full max-w-[1440px] h-screen lg:max-h-[900px] bg-white border border-border-card lg:rounded-card shadow-sm flex flex-col overflow-hidden">
+    
+    <!-- Collapsible Mobile / Tablet Top Bar (Visible only below 1024px) -->
+    <header class="lg:hidden flex items-center justify-between px-5 py-3.5 border-b border-border-card bg-white shrink-0">
+      <a href="{{ url_for('dashboard') }}" class="flex items-center space-x-2.5">
+        <!-- Logo glyphs -->
+        <div class="relative w-8 h-8 flex items-center">
+          <div class="w-5 h-5 rounded-full bg-primary/90 absolute left-0 shadow-sm"></div>
+          <div class="w-5 h-5 rounded-full bg-secondary/90 absolute left-3 mix-blend-multiply shadow-sm"></div>
+        </div>
+        <div>
+          <span class="text-base font-extrabold tracking-tight text-text-primary block leading-none">LoanIQ</span>
+          <span class="text-[10px] font-medium text-text-secondary">Underwriting Engine</span>
+        </div>
+      </a>
+
+      <!-- Quick Nav for Mobile Screens -->
+      <nav class="flex items-center space-x-1">
+        <a href="{{ url_for('dashboard') }}" class="px-2.5 py-1.5 rounded-btn text-xs font-semibold {% if request.path == '/' %}bg-primary-50 text-primary font-bold{% else %}text-text-secondary hover:text-text-primary{% endif %}">
+          Dashboard
+        </a>
+        <a href="{{ url_for('apply_loan') }}" class="px-2.5 py-1.5 rounded-btn text-xs font-semibold {% if request.path == '/apply' %}bg-primary-50 text-primary font-bold{% else %}text-text-secondary hover:text-text-primary{% endif %}">
+          New App
+        </a>
+        <a href="{{ url_for('list_applications') }}" class="px-2.5 py-1.5 rounded-btn text-xs font-semibold {% if request.path == '/applications' %}bg-primary-50 text-primary font-bold{% else %}text-text-secondary hover:text-text-primary{% endif %}">
+          Applications
+        </a>
+      </nav>
+    </header>
+
+    <!-- App Columns Container -->
+    <div class="flex-1 flex overflow-hidden">
+
+      <!-- =================================================================== -->
+      <!-- LEFT SIDEBAR: 256px, White, Border-Right 1px #f3f4f6                -->
+      <!-- =================================================================== -->
+      <aside class="hidden lg:flex flex-col w-[256px] min-w-[256px] max-w-[256px] h-full border-r border-[#f3f4f6] bg-white shrink-0 overflow-hidden">
+        {% block left %}
+          <div class="h-full flex flex-col justify-between p-5 overflow-y-auto custom-scrollbar">
+            
+            <div class="space-y-5">
+              <!-- 1. Logo: Two overlapping circular glyphs (blue and orange) + text "LoanIQ" bold -->
+              <div class="flex items-center space-x-3 px-1 pt-1">
+                <div class="relative w-9 h-7 flex items-center">
+                  <div class="w-6 h-6 rounded-full bg-[#0d6efd] absolute left-0 shadow-sm opacity-95"></div>
+                  <div class="w-6 h-6 rounded-full bg-[#f97316] absolute left-3.5 mix-blend-multiply shadow-sm opacity-95"></div>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-xl font-extrabold tracking-tight text-[#1e293b] leading-none">LoanIQ</span>
+                  <span class="text-[10px] font-semibold uppercase tracking-wider text-[#64748b] mt-0.5">Credit Intelligence</span>
+                </div>
+              </div>
+
+              <!-- 2. Loan Type Selector Button with Dropdown -->
+              <div class="relative" id="loanTypeSelectorContainer">
+                <button type="button" 
+                        id="loanTypeDropdownBtn"
+                        class="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#fff7ed] text-[#f97316] rounded-[12px] border border-orange-200/60 hover:bg-orange-100/60 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                        aria-expanded="false" 
+                        aria-haspopup="true">
+                  <div class="flex items-center space-x-2.5 min-w-0">
+                    <!-- Category Icon -->
+                    <span class="w-7 h-7 rounded-lg bg-orange-500/15 flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4 text-[#f97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </span>
+                    <span id="selectedLoanTypeLabel" class="text-xs font-bold truncate tracking-tight">Personal Loan</span>
+                  </div>
+                  <!-- Chevron Icon -->
+                  <svg id="loanTypeChevron" class="w-4 h-4 text-[#f97316] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                <!-- Dropdown Menu (Hidden by default) -->
+                <div id="loanTypeMenu" 
+                     class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-[12px] border border-[#f3f4f6] shadow-xl py-1.5 z-50 transition-all duration-150">
+                  <button type="button" data-loan-type="Personal Loan" class="loan-type-option w-full text-left px-3.5 py-2 text-xs font-semibold text-[#1e293b] hover:bg-[#fff7ed] hover:text-[#f97316] flex items-center justify-between transition-colors">
+                    <span>Personal Loan</span>
+                    <span class="text-[10px] font-bold text-[#f97316] bg-orange-50 px-1.5 py-0.5 rounded">11.5%</span>
+                  </button>
+                  <button type="button" data-loan-type="Home Loan" class="loan-type-option w-full text-left px-3.5 py-2 text-xs font-semibold text-[#1e293b] hover:bg-[#fff7ed] hover:text-[#f97316] flex items-center justify-between transition-colors">
+                    <span>Home Loan</span>
+                    <span class="text-[10px] font-bold text-[#0d6efd] bg-blue-50 px-1.5 py-0.5 rounded">8.5%</span>
+                  </button>
+                  <button type="button" data-loan-type="Auto Loan" class="loan-type-option w-full text-left px-3.5 py-2 text-xs font-semibold text-[#1e293b] hover:bg-[#fff7ed] hover:text-[#f97316] flex items-center justify-between transition-colors">
+                    <span>Auto Loan</span>
+                    <span class="text-[10px] font-bold text-[#a855f7] bg-purple-50 px-1.5 py-0.5 rounded">9.5%</span>
+                  </button>
+                  <button type="button" data-loan-type="Education Loan" class="loan-type-option w-full text-left px-3.5 py-2 text-xs font-semibold text-[#1e293b] hover:bg-[#fff7ed] hover:text-[#f97316] flex items-center justify-between transition-colors">
+                    <span>Education Loan</span>
+                    <span class="text-[10px] font-bold text-[#ec4899] bg-pink-50 px-1.5 py-0.5 rounded">9.0%</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 3. Navigation Links (12px padding, radius 12px, active indicator pill) -->
+              <nav class="space-y-1">
+                
+                <!-- Dashboard (/) -->
+                <a href="{{ url_for('dashboard') }}" 
+                   class="group relative flex items-center p-3 rounded-[12px] text-xs font-semibold transition-all duration-200 {% if request.path == '/' %}bg-[#edf5ff] text-[#0d6efd] font-bold{% else %}text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50{% endif %}">
+                  {% if request.path == '/' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0d6efd] rounded-r-full"></span>
+                  {% endif %}
+                  <svg class="w-4 h-4 mr-3 {% if request.path == '/' %}text-[#0d6efd]{% else %}text-[#64748b] group-hover:text-[#1e293b]{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  <span>Dashboard</span>
+                </a>
+
+                <!-- New Application (/apply) -->
+                <a href="{{ url_for('apply_loan') }}" 
+                   class="group relative flex items-center p-3 rounded-[12px] text-xs font-semibold transition-all duration-200 {% if request.path == '/apply' %}bg-[#edf5ff] text-[#0d6efd] font-bold{% else %}text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50{% endif %}">
+                  {% if request.path == '/apply' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0d6efd] rounded-r-full"></span>
+                  {% endif %}
+                  <svg class="w-4 h-4 mr-3 {% if request.path == '/apply' %}text-[#0d6efd]{% else %}text-[#64748b] group-hover:text-[#1e293b]{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>New Application</span>
+                </a>
+
+                <!-- Applications (/applications) -->
+                <a href="{{ url_for('list_applications') }}" 
+                   class="group relative flex items-center p-3 rounded-[12px] text-xs font-semibold transition-all duration-200 {% if request.path.startswith('/applications') or request.path.startswith('/result') %}bg-[#edf5ff] text-[#0d6efd] font-bold{% else %}text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50{% endif %}">
+                  {% if request.path.startswith('/applications') or request.path.startswith('/result') %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0d6efd] rounded-r-full"></span>
+                  {% endif %}
+                  <svg class="w-4 h-4 mr-3 {% if request.path.startswith('/applications') or request.path.startswith('/result') %}text-[#0d6efd]{% else %}text-[#64748b] group-hover:text-[#1e293b]{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <span>Applications</span>
+                </a>
+
+                <!-- Risk Analysis -->
+                <a href="{{ url_for('dashboard') }}#risk-analysis" 
+                   class="group relative flex items-center p-3 rounded-[12px] text-xs font-semibold transition-all duration-200 {% if request.path == '/risk-analysis' %}bg-[#edf5ff] text-[#0d6efd] font-bold{% else %}text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50{% endif %}">
+                  {% if request.path == '/risk-analysis' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0d6efd] rounded-r-full"></span>
+                  {% endif %}
+                  <svg class="w-4 h-4 mr-3 {% if request.path == '/risk-analysis' %}text-[#0d6efd]{% else %}text-[#64748b] group-hover:text-[#1e293b]{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span>Risk Analysis</span>
+                </a>
+
+                <!-- AI Advisor -->
+                <a href="{{ url_for('apply_loan') }}#advisor" 
+                   class="group relative flex items-center p-3 rounded-[12px] text-xs font-semibold transition-all duration-200 {% if request.path == '/advisor' %}bg-[#edf5ff] text-[#0d6efd] font-bold{% else %}text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50{% endif %}">
+                  {% if request.path == '/advisor' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0d6efd] rounded-r-full"></span>
+                  {% endif %}
+                  <svg class="w-4 h-4 mr-3 {% if request.path == '/advisor' %}text-[#0d6efd]{% else %}text-[#64748b] group-hover:text-[#1e293b]{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>AI Advisor</span>
+                </a>
+
+                <!-- Reports -->
+                <a href="{{ url_for('list_applications') }}#reports" 
+                   class="group relative flex items-center p-3 rounded-[12px] text-xs font-semibold transition-all duration-200 {% if request.path == '/reports' %}bg-[#edf5ff] text-[#0d6efd] font-bold{% else %}text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50{% endif %}">
+                  {% if request.path == '/reports' %}
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0d6efd] rounded-r-full"></span>
+                  {% endif %}
+                  <svg class="w-4 h-4 mr-3 {% if request.path == '/reports' %}text-[#0d6efd]{% else %}text-[#64748b] group-hover:text-[#1e293b]{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Reports</span>
+                </a>
+
+              </nav>
+            </div>
+
+            <!-- 4. Bottom Promo Card: Gradient blue-50 to indigo-50, radius 24px, floating circular badge, View tips button -->
+            <div class="relative mt-6 pt-4">
+              <!-- Floating circular icon badge at top -->
+              <div class="absolute -top-1 left-5 w-9 h-9 rounded-full bg-gradient-to-tr from-[#0d6efd] to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 border-2 border-white z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+
+              <!-- Promo Card Body -->
+              <div class="rounded-[24px] bg-gradient-to-br from-blue-50 via-indigo-50/70 to-blue-50/50 p-4 pt-6 border border-blue-100/80 shadow-sm space-y-2.5">
+                <h4 class="text-xs font-bold text-[#1e293b] tracking-tight">Boost your credit score</h4>
+                <p class="text-[11px] text-[#64748b] leading-relaxed">
+                  Keep revolving utilization under 30% and maintain prompt EMI repayments to optimize approval rates.
+                </p>
+                <a href="{{ url_for('apply_loan') }}" 
+                   class="inline-flex items-center space-x-1.5 text-xs font-bold text-[#0d6efd] hover:text-[#0b5ed7] bg-white hover:bg-blue-50/80 px-3 py-1.5 rounded-[10px] border border-blue-200/60 shadow-xs transition-all duration-200">
+                  <span>View tips</span>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        {% endblock %}
+      </aside>
+
+      <!-- =================================================================== -->
+      <!-- MAIN FLUID COLUMN: Internal Scroll with 32px Padding                -->
+      <!-- =================================================================== -->
+      <main class="flex-1 min-w-0 h-full overflow-y-auto p-8 custom-scrollbar bg-surface">
+        
+        <!-- Flash Alert Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-6 space-y-2">
+              {% for category, message in messages %}
+                <div class="p-4 rounded-btn flex items-center space-x-3 border shadow-sm {% if category == 'success' %}bg-success-50 border-success-100 text-success-600{% elif category == 'danger' %}bg-rose-50 border-rose-200 text-rose-700{% else %}bg-primary-50 border-primary-200 text-primary-700{% endif %}">
+                  <span class="w-2 h-2 rounded-full {% if category == 'success' %}bg-success{% elif category == 'danger' %}bg-rose-600{% else %}bg-primary{% endif %}"></span>
+                  <p class="text-sm font-semibold flex-1">{{ message }}</p>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Child Page View Block -->
+        {% block content %}{% endblock %}
+
+      </main>
+
+      <!-- =================================================================== -->
+      <!-- RIGHT SIDEBAR: 320px (Hidden below 1280px, Internal Scroll)         -->
+      <!-- =================================================================== -->
+      <aside class="hidden xl:flex flex-col w-[320px] min-w-[320px] max-w-[320px] h-full border-l border-border-card bg-white shrink-0 overflow-hidden">
+        <div class="h-full overflow-y-auto p-6 custom-scrollbar space-y-6">
+          {% block right %}
+            
+            <!-- Loan Products & Benchmark Rates -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-text-secondary">Benchmark Lending Rates</h3>
+                <span class="text-[10px] font-bold text-primary bg-primary-50 px-2 py-0.5 rounded-full">RBI Prime</span>
+              </div>
+
+              <div class="space-y-2.5">
+                
+                <div class="app-card p-3.5 flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-btn bg-primary-50 text-primary flex items-center justify-center font-bold text-xs">
+                      HL
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-text-primary">Home Loan</h4>
+                      <p class="text-[11px] text-text-secondary">Tenure up to 20 yrs</p>
+                    </div>
+                  </div>
+                  <span class="text-xs font-extrabold text-primary">8.50%</span>
+                </div>
+
+                <div class="app-card p-3.5 flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-btn bg-purple-50 text-purple flex items-center justify-center font-bold text-xs">
+                      AL
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-text-primary">Auto Loan</h4>
+                      <p class="text-[11px] text-text-secondary">Vehicle Hypothecation</p>
+                    </div>
+                  </div>
+                  <span class="text-xs font-extrabold text-purple">9.50%</span>
+                </div>
+
+                <div class="app-card p-3.5 flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-btn bg-pink-50 text-pink flex items-center justify-center font-bold text-xs">
+                      EL
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-text-primary">Education Loan</h4>
+                      <p class="text-[11px] text-text-secondary">Sec 80E Tax Rebate</p>
+                    </div>
+                  </div>
+                  <span class="text-xs font-extrabold text-pink">9.00%</span>
+                </div>
+
+                <div class="app-card p-3.5 flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-btn bg-secondary-50 text-secondary flex items-center justify-center font-bold text-xs">
+                      PL
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-text-primary">Personal Loan</h4>
+                      <p class="text-[11px] text-text-secondary">Unsecured Instant</p>
+                    </div>
+                  </div>
+                  <span class="text-xs font-extrabold text-secondary">11.50%</span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Underwriting Policy Rules Card -->
+            <div class="app-card p-4 space-y-3">
+              <div class="flex items-center space-x-2">
+                <div class="w-2 h-2 rounded-full bg-success"></div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-text-primary">Credit Policy Gates</h3>
+              </div>
+              <ul class="space-y-2 text-xs text-text-secondary">
+                <li class="flex items-center justify-between">
+                  <span>Minimum Age</span>
+                  <span class="font-bold text-text-primary">21 Years</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>Maximum Age</span>
+                  <span class="font-bold text-text-primary">60 Years</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>Minimum Income</span>
+                  <span class="font-bold text-text-primary">₹15,000 / mo</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>CIBIL Threshold</span>
+                  <span class="font-bold text-text-primary">550 Min</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <span>Maximum FOIR</span>
+                  <span class="font-bold text-text-primary">65% Cap</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Explainable AI (XAI) Status Card -->
+            <div class="app-card p-4 bg-gradient-to-br from-white to-primary-50 space-y-2">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Explainable AI (XAI)</h3>
+              </div>
+              <p class="text-xs text-text-secondary leading-relaxed">
+                Log-odds linear decomposition is calculated per applicant to attribute the top 5 decision drivers with plain-English rationales.
+              </p>
+            </div>
+
+          {% endblock %}
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- Loan Type Dropdown Controller Script -->
+  <script>
+    (function initLoanTypeSelector() {
+      // Global JS variable storing active loan category
+      window.activeLoanType = localStorage.getItem("selectedLoanType") || "Personal Loan";
+
+      function updateSelectorUI(typeName) {
+        window.activeLoanType = typeName;
+        try {
+          localStorage.setItem("selectedLoanType", typeName);
+        } catch (e) {
+          console.warn("localStorage unavailable:", e);
+        }
+        
+        const label = document.getElementById("selectedLoanTypeLabel");
+        if (label) {
+          label.textContent = typeName;
+        }
+
+        // If the application form exists on the page, synchronize its select input
+        const formSelect = document.getElementById("loan_type");
+        if (formSelect) {
+          const simplifiedVal = typeName.replace(" Loan", "").trim();
+          for (let i = 0; i < formSelect.options.length; i++) {
+            if (formSelect.options[i].text.toLowerCase().includes(simplifiedVal.toLowerCase()) || 
+                formSelect.options[i].value.toLowerCase() === simplifiedVal.toLowerCase()) {
+              formSelect.selectedIndex = i;
+              formSelect.dispatchEvent(new Event("change"));
+              break;
+            }
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const btn = document.getElementById("loanTypeDropdownBtn");
+        const menu = document.getElementById("loanTypeMenu");
+        const chevron = document.getElementById("loanTypeChevron");
+        const options = document.querySelectorAll(".loan-type-option");
+
+        // Restore saved selection
+        updateSelectorUI(window.activeLoanType);
+
+        if (btn && menu) {
+          btn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            const isHidden = menu.classList.contains("hidden");
+            if (isHidden) {
+              menu.classList.remove("hidden");
+              if (chevron) chevron.classList.add("rotate-180");
+              btn.setAttribute("aria-expanded", "true");
+            } else {
+              menu.classList.add("hidden");
+              if (chevron) chevron.classList.remove("rotate-180");
+              btn.setAttribute("aria-expanded", "false");
+            }
+          });
+
+          // Option selection
+          options.forEach(function(opt) {
+            opt.addEventListener("click", function(e) {
+              e.stopPropagation();
+              const chosen = this.getAttribute("data-loan-type");
+              if (chosen) {
+                updateSelectorUI(chosen);
+              }
+              menu.classList.add("hidden");
+              if (chevron) chevron.classList.remove("rotate-180");
+              btn.setAttribute("aria-expanded", "false");
+            });
+          });
+
+          // Close on external click
+          document.addEventListener("click", function(e) {
+            if (!document.getElementById("loanTypeSelectorContainer")?.contains(e.target)) {
+              menu.classList.add("hidden");
+              if (chevron) chevron.classList.remove("rotate-180");
+              btn.setAttribute("aria-expanded", "false");
+            }
+          });
+        }
+      });
+    })();
+  </script>
+
+  <!-- Vanilla JavaScript & Interactive Calculations -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+  <!-- Page Specific Scripts Block -->
+  {% block scripts %}{% endblock %}
+
+</body>
+</html>

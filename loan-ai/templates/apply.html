@@ -1,0 +1,858 @@
+{% extends "base.html" %}
+
+{% block title %}New Application | LoanIQ - Risk Profiler{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+
+  <!-- Header & Breadcrumbs & Sample Applicant Loader -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center space-x-2 text-xs font-semibold text-[#64748b] mb-1">
+        <a href="{{ url_for('dashboard') }}" class="hover:text-[#0d6efd] transition-colors">Dashboard</a>
+        <span>&rsaquo;</span>
+        <span class="text-[#1e293b]">New Application</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1e293b] tracking-tight">
+        Retail Loan Application
+      </h1>
+      <p class="text-xs text-[#64748b] mt-1">
+        2-step underwriting intake with live bureau calibration, FOIR assessment, and instant sanctioning.
+      </p>
+    </div>
+
+    <!-- "Load Sample Applicant" Dropdown Button -->
+    <div class="relative inline-block text-left" id="sampleApplicantDropdownContainer">
+      <button type="button" 
+              id="sampleApplicantBtn"
+              class="inline-flex items-center space-x-2 bg-white hover:bg-slate-50 text-[#1e293b] text-xs font-bold px-4 py-2.5 rounded-[12px] border border-[#f3f4f6] shadow-sm hover:shadow transition-all duration-200">
+        <svg class="w-4 h-4 text-[#0d6efd]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <span>Load Sample Applicant</span>
+        <svg class="w-3.5 h-3.5 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div id="sampleApplicantMenu" 
+           class="hidden absolute right-0 mt-2 w-64 bg-white rounded-[16px] border border-[#f3f4f6] shadow-xl py-2 z-50 transition-all duration-150">
+        <div class="px-3 py-1.5 border-b border-[#f3f4f6] text-[10px] font-bold uppercase tracking-wider text-[#64748b]">
+          Select Borrower Profile
+        </div>
+        <button type="button" data-sample="rahul" class="sample-applicant-option w-full text-left px-3.5 py-2.5 hover:bg-slate-50 flex items-center justify-between text-xs transition-colors">
+          <div>
+            <div class="font-bold text-[#1e293b]">Rahul Sharma</div>
+            <div class="text-[10px] text-[#64748b]">₹90k &bull; 780 CIBIL &bull; Salaried</div>
+          </div>
+          <span class="text-[10px] font-bold text-[#10b981] bg-emerald-50 px-2 py-0.5 rounded-full">Approved</span>
+        </button>
+        <button type="button" data-sample="priya" class="sample-applicant-option w-full text-left px-3.5 py-2.5 hover:bg-slate-50 flex items-center justify-between text-xs transition-colors">
+          <div>
+            <div class="font-bold text-[#1e293b]">Priya Patel</div>
+            <div class="text-[10px] text-[#64748b]">₹45k &bull; 680 CIBIL &bull; Self-Emp</div>
+          </div>
+          <span class="text-[10px] font-bold text-[#f97316] bg-orange-50 px-2 py-0.5 rounded-full">Review</span>
+        </button>
+        <button type="button" data-sample="arun" class="sample-applicant-option w-full text-left px-3.5 py-2.5 hover:bg-slate-50 flex items-center justify-between text-xs transition-colors">
+          <div>
+            <div class="font-bold text-[#1e293b]">Arun Kumar</div>
+            <div class="text-[10px] text-[#64748b]">₹30k &bull; 540 CIBIL &bull; High DTI</div>
+          </div>
+          <span class="text-[10px] font-bold text-[#ec4899] bg-pink-50 px-2 py-0.5 rounded-full">Rejected</span>
+        </button>
+        <button type="button" data-sample="sneha" class="sample-applicant-option w-full text-left px-3.5 py-2.5 hover:bg-slate-50 flex items-center justify-between text-xs transition-colors">
+          <div>
+            <div class="font-bold text-[#1e293b]">Sneha Reddy</div>
+            <div class="text-[10px] text-[#64748b]">₹35k &bull; 720 CIBIL &bull; 0 Existing EMI</div>
+          </div>
+          <span class="text-[10px] font-bold text-[#10b981] bg-emerald-50 px-2 py-0.5 rounded-full">Approved</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Stepper (Step 1 and Step 2) -->
+  <div class="app-card p-4 sm:p-5">
+    <div class="flex items-center justify-between relative max-w-xl mx-auto">
+      <!-- Background Connecting Line -->
+      <div class="absolute left-12 right-12 top-5 h-1 bg-slate-100 -z-0">
+        <div id="stepperProgressBar" class="h-full bg-[#0d6efd] transition-all duration-300" style="width: 0%;"></div>
+      </div>
+
+      <!-- Step 1 Indicator -->
+      <div class="flex flex-col items-center relative z-10 cursor-pointer" id="step1Indicator" onclick="goToStep(1)">
+        <div id="step1Circle" class="w-10 h-10 rounded-full bg-[#0d6efd] text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-blue-500/25 transition-all">
+          1
+        </div>
+        <span class="text-xs font-bold text-[#1e293b] mt-2">Personal & Income</span>
+        <span class="text-[10px] font-medium text-[#64748b]">Applicant Demographics</span>
+      </div>
+
+      <!-- Step 2 Indicator -->
+      <div class="flex flex-col items-center relative z-10 cursor-pointer" id="step2Indicator" onclick="goToStep(2)">
+        <div id="step2Circle" class="w-10 h-10 rounded-full bg-slate-100 text-[#64748b] flex items-center justify-center font-extrabold text-sm border-2 border-slate-200 transition-all">
+          2
+        </div>
+        <span class="text-xs font-bold text-[#64748b] mt-2" id="step2Label">Credit & Loan</span>
+        <span class="text-[10px] font-medium text-[#64748b]">Bureau & Facility</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Card Container -->
+  <form id="loanIntakeForm" class="app-card p-6 sm:p-8 space-y-6" novalidate>
+
+    <!-- ===================================================================== -->
+    <!-- STEP 1: Personal & Income Details                                     -->
+    <!-- ===================================================================== -->
+    <div id="step1Content" class="space-y-6">
+      
+      <div class="border-b border-[#f3f4f6] pb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-[#1e293b]">Step 1: Personal & Employment Information</h2>
+          <p class="text-xs text-[#64748b]">Provide demographic and verifiable earnings data</p>
+        </div>
+        <span class="text-[10px] font-bold text-[#0d6efd] bg-blue-50 px-2.5 py-1 rounded-full">Part 1 of 2</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        
+        <!-- Full Name -->
+        <div class="sm:col-span-2 space-y-1.5">
+          <label for="name" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Full Name <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="name" name="name" placeholder="e.g. Rahul Sharma"
+                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+          <p id="err_name" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Age -->
+        <div class="space-y-1.5">
+          <label for="age" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Age (21 – 60 Yrs) <span class="text-rose-500">*</span>
+          </label>
+          <input type="number" id="age" name="age" min="21" max="60" value="30"
+                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+          <p id="err_age" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Employment Type -->
+        <div class="space-y-1.5">
+          <label for="employment_type" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Employment Type <span class="text-rose-500">*</span>
+          </label>
+          <select id="employment_type" name="employment_type"
+                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+            <option value="0" selected>Salaried (Corporate / Govt / MNC)</option>
+            <option value="1">Self-Employed (Business / Firm / Proprietor)</option>
+            <option value="2">Freelancer / Gig Professional</option>
+          </select>
+          <p id="err_employment_type" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Employment Years -->
+        <div class="space-y-1.5">
+          <label for="employment_years" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Work Experience (Years) <span class="text-rose-500">*</span>
+          </label>
+          <input type="number" id="employment_years" name="employment_years" min="0" max="45" value="5" step="0.5"
+                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+          <p id="err_employment_years" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Monthly Income (₹) -->
+        <div class="space-y-1.5">
+          <label for="monthly_income" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Monthly Net Income (₹) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-[#64748b] font-bold text-xs">₹</span>
+            <input type="number" id="monthly_income" name="monthly_income" min="15000" step="1000" placeholder="e.g. 75000"
+                   class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+          </div>
+          <p id="err_monthly_income" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+      </div>
+
+      <!-- Step 1 Footer Action -->
+      <div class="pt-4 border-t border-[#f3f4f6] flex justify-end">
+        <button type="button" 
+                onclick="validateAndGoToStep(2)"
+                class="inline-flex items-center space-x-2 bg-[#0d6efd] hover:bg-[#0b5ed7] text-white text-xs font-bold px-6 py-3 rounded-[12px] shadow-cta hover:shadow-cta-hover transition-all duration-200">
+          <span>Continue to Credit & Loan</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- STEP 2: Credit & Loan Details                                         -->
+    <!-- ===================================================================== -->
+    <div id="step2Content" class="space-y-6 hidden">
+      
+      <div class="border-b border-[#f3f4f6] pb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-[#1e293b]">Step 2: Credit Bureau & Loan Facility Details</h2>
+          <p class="text-xs text-[#64748b]">Configure repayment track record, proposed borrowing, and tenure</p>
+        </div>
+        <span class="text-[10px] font-bold text-[#ec4899] bg-pink-50 px-2.5 py-1 rounded-full">Part 2 of 2</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        
+        <!-- Credit Score (300-900 with Live Colored Badge: Red/Orange/Green) -->
+        <div class="sm:col-span-2 bg-slate-50/70 p-4 rounded-[16px] border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <label for="credit_score" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+              CIBIL Credit Score (300 – 900) <span class="text-rose-500">*</span>
+            </label>
+            <!-- Live Colored Badge -->
+            <span id="cibilScoreBadge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-[#10b981] shadow-xs transition-colors">
+              Excellent (750)
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
+            <div class="sm:col-span-3">
+              <input type="range" id="credit_score_range" min="300" max="900" value="750" step="5"
+                     class="w-full">
+            </div>
+            <div class="sm:col-span-1">
+              <input type="number" id="credit_score" name="credit_score" min="300" max="900" value="750"
+                     class="w-full text-center px-3 py-2 bg-white border border-slate-200 rounded-[10px] text-xs font-extrabold text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#0d6efd]">
+            </div>
+          </div>
+          <p id="err_credit_score" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Existing Monthly EMI (₹) -->
+        <div class="space-y-1.5">
+          <label for="existing_emi" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Existing Monthly EMIs (₹) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-[#64748b] font-bold text-xs">₹</span>
+            <input type="number" id="existing_emi" name="existing_emi" min="0" step="500" value="0"
+                   class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+          </div>
+          <p id="err_existing_emi" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Missed Payments (Last 24 Months) -->
+        <div class="space-y-1.5">
+          <label for="missed_payments" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Missed Payments (Last 24 Mos) <span class="text-rose-500">*</span>
+          </label>
+          <input type="number" id="missed_payments" name="missed_payments" min="0" max="24" value="0"
+                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+          <p id="err_missed_payments" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Credit Card Utilization % (Range Slider with Live Value) -->
+        <div class="sm:col-span-2 space-y-2 bg-slate-50/70 p-4 rounded-[16px] border border-slate-200/80">
+          <div class="flex items-center justify-between">
+            <label for="credit_utilization" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+              Credit Card Revolving Utilization (%)
+            </label>
+            <span id="creditUtilVal" class="text-xs font-extrabold text-[#0d6efd] bg-blue-50 px-2.5 py-0.5 rounded-full">
+              20%
+            </span>
+          </div>
+          <input type="range" id="credit_utilization" name="credit_utilization" min="0" max="100" value="20" step="1"
+                 class="w-full">
+          <p class="text-[10px] text-[#64748b]">Recommended prime benchmark: consistently under 30%</p>
+          <p id="err_credit_utilization" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Loan Type -->
+        <div class="space-y-1.5">
+          <label for="loan_type" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Loan Type / Facility <span class="text-rose-500">*</span>
+          </label>
+          <select id="loan_type" name="loan_type"
+                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+            <option value="Personal" selected>Personal Loan (11.5% Base)</option>
+            <option value="Home">Home Loan (8.5% Base)</option>
+            <option value="Auto">Auto Loan (9.5% Base)</option>
+            <option value="Education">Education Loan (9.0% Base)</option>
+            <option value="Business">Business Loan (13.5% Base)</option>
+          </select>
+          <p id="err_loan_type" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Tenure (Months, Select 12-84) -->
+        <div class="space-y-1.5">
+          <label for="tenure_months" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Tenure (Months) <span class="text-rose-500">*</span>
+          </label>
+          <select id="tenure_months" name="tenure_months"
+                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+            <option value="12">12 Months (1 Year)</option>
+            <option value="24">24 Months (2 Years)</option>
+            <option value="36" selected>36 Months (3 Years)</option>
+            <option value="48">48 Months (4 Years)</option>
+            <option value="60">60 Months (5 Years)</option>
+            <option value="72">72 Months (6 Years)</option>
+            <option value="84">84 Months (7 Years)</option>
+          </select>
+          <p id="err_tenure_months" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Loan Amount (₹) with Live Estimated EMI Preview -->
+        <div class="sm:col-span-2 space-y-2">
+          <label for="loan_amount" class="block text-xs font-bold uppercase tracking-wider text-[#64748b]">
+            Requested Loan Amount (₹) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-[#64748b] font-bold text-xs">₹</span>
+            <input type="number" id="loan_amount" name="loan_amount" min="10000" step="10000" value="500000" placeholder="e.g. 500000"
+                   class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[12px] text-xs sm:text-sm text-[#1e293b] font-extrabold focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+          </div>
+          <p id="err_loan_amount" class="hidden text-[11px] font-semibold text-rose-600 mt-1"></p>
+
+          <!-- Live EMI Preview Below Loan Amount (Assumes ~11% Benchmark Rate) -->
+          <div class="flex items-center justify-between p-3 bg-blue-50/70 border border-blue-100 rounded-[12px] text-xs">
+            <div class="flex items-center space-x-2 text-[#0d6efd] font-semibold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Estimated Monthly Installment (EMI @ ~11%):</span>
+            </div>
+            <span id="liveEmiPreview" class="text-sm font-extrabold text-[#0d6efd]">
+              ₹16,369 / mo
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Step 2 Footer Actions -->
+      <div class="pt-4 border-t border-[#f3f4f6] flex items-center justify-between">
+        <button type="button" 
+                onclick="goToStep(1)"
+                class="inline-flex items-center space-x-1.5 text-xs font-bold text-[#64748b] hover:text-[#1e293b] py-2.5 px-4 rounded-[12px] hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Back to Step 1</span>
+        </button>
+
+        <button type="submit" 
+                id="submitEvaluateBtn"
+                class="inline-flex items-center space-x-2 bg-[#0d6efd] hover:bg-[#0b5ed7] text-white text-xs font-bold px-7 py-3 rounded-[12px] shadow-cta hover:shadow-cta-hover transition-all duration-200">
+          <!-- Spinner (hidden by default) -->
+          <svg id="submitSpinner" class="hidden w-4 h-4 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span id="submitBtnText">Submit for AI Evaluation</span>
+        </button>
+      </div>
+
+    </div>
+
+  </form>
+
+  <!-- Error Toast Notification Container -->
+  <div id="errorToast" class="fixed bottom-6 right-6 max-w-md bg-[#1e293b] text-white rounded-[16px] p-4 shadow-2xl border border-slate-700 hidden z-50 flex items-start space-x-3 transition-all duration-300">
+    <div class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+    <div class="flex-1 text-xs">
+      <h4 class="font-bold text-rose-300" id="toastTitle">Evaluation Request Failed</h4>
+      <p class="text-slate-300 mt-0.5 leading-relaxed" id="toastMessage">Please check your inputs and try again.</p>
+    </div>
+    <button type="button" onclick="hideToast()" class="text-slate-400 hover:text-white">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ----------------------------------------------------------------------------
+  // Sample Applicant Database
+  // ----------------------------------------------------------------------------
+  const SAMPLE_APPLICANTS = {
+    rahul: {
+      name: "Rahul Sharma",
+      age: 32,
+      employment_type: 0, // Salaried
+      employment_years: 7,
+      monthly_income: 90000,
+      credit_score: 780,
+      existing_emi: 8000,
+      credit_utilization: 15,
+      missed_payments: 0,
+      loan_type: "Personal",
+      loan_amount: 800000,
+      tenure_months: 36
+    },
+    priya: {
+      name: "Priya Patel",
+      age: 29,
+      employment_type: 1, // Self-Employed
+      employment_years: 4,
+      monthly_income: 45000,
+      credit_score: 680,
+      existing_emi: 12000,
+      credit_utilization: 42,
+      missed_payments: 1,
+      loan_type: "Personal",
+      loan_amount: 600000,
+      tenure_months: 48
+    },
+    arun: {
+      name: "Arun Kumar",
+      age: 38,
+      employment_type: 2, // Freelancer
+      employment_years: 2,
+      monthly_income: 30000,
+      credit_score: 540,
+      existing_emi: 15000,
+      credit_utilization: 82,
+      missed_payments: 4,
+      loan_type: "Personal",
+      loan_amount: 1000000,
+      tenure_months: 60
+    },
+    sneha: {
+      name: "Sneha Reddy",
+      age: 26,
+      employment_type: 0, // Salaried
+      employment_years: 3,
+      monthly_income: 35000,
+      credit_score: 720,
+      existing_emi: 0,
+      credit_utilization: 10,
+      missed_payments: 0,
+      loan_type: "Personal",
+      loan_amount: 300000,
+      tenure_months: 24
+    }
+  };
+
+  let currentStep = 1;
+
+  // ----------------------------------------------------------------------------
+  // Step Navigation & Validation
+  // ----------------------------------------------------------------------------
+  function goToStep(step) {
+    if (step === 2 && !validateStep1()) {
+      return;
+    }
+
+    currentStep = step;
+    const step1Content = document.getElementById("step1Content");
+    const step2Content = document.getElementById("step2Content");
+    const step1Circle = document.getElementById("step1Circle");
+    const step2Circle = document.getElementById("step2Circle");
+    const step2Label = document.getElementById("step2Label");
+    const progress = document.getElementById("stepperProgressBar");
+
+    if (step === 1) {
+      step1Content.classList.remove("hidden");
+      step2Content.classList.add("hidden");
+      progress.style.width = "0%";
+      step1Circle.className = "w-10 h-10 rounded-full bg-[#0d6efd] text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-blue-500/25 transition-all";
+      step2Circle.className = "w-10 h-10 rounded-full bg-slate-100 text-[#64748b] flex items-center justify-center font-extrabold text-sm border-2 border-slate-200 transition-all";
+      step2Label.className = "text-xs font-bold text-[#64748b] mt-2";
+    } else {
+      step1Content.classList.add("hidden");
+      step2Content.classList.remove("hidden");
+      progress.style.width = "100%";
+      step1Circle.className = "w-10 h-10 rounded-full bg-[#10b981] text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-emerald-500/25 transition-all";
+      step2Circle.className = "w-10 h-10 rounded-full bg-[#0d6efd] text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-blue-500/25 transition-all";
+      step2Label.className = "text-xs font-bold text-[#1e293b] mt-2";
+      updateLiveEmiPreview();
+    }
+  }
+
+  function validateAndGoToStep(step) {
+    if (step === 2 && validateStep1()) {
+      goToStep(2);
+    }
+  }
+
+  function showInlineError(fieldId, message) {
+    const el = document.getElementById(`err_${fieldId}`);
+    const input = document.getElementById(fieldId);
+    if (el) {
+      el.textContent = message;
+      el.classList.remove("hidden");
+    }
+    if (input) {
+      input.classList.add("border-rose-400", "bg-rose-50/50");
+    }
+  }
+
+  function clearInlineError(fieldId) {
+    const el = document.getElementById(`err_${fieldId}`);
+    const input = document.getElementById(fieldId);
+    if (el) {
+      el.textContent = "";
+      el.classList.add("hidden");
+    }
+    if (input) {
+      input.classList.remove("border-rose-400", "bg-rose-50/50");
+    }
+  }
+
+  function validateStep1() {
+    let isValid = true;
+
+    // Full Name
+    const name = document.getElementById("name").value.trim();
+    if (!name) {
+      showInlineError("name", "Applicant full name is required.");
+      isValid = false;
+    } else {
+      clearInlineError("name");
+    }
+
+    // Age
+    const age = parseInt(document.getElementById("age").value);
+    if (isNaN(age) || age < 21 || age > 60) {
+      showInlineError("age", "Age must be between 21 and 60 years.");
+      isValid = false;
+    } else {
+      clearInlineError("age");
+    }
+
+    // Work Experience
+    const exp = parseFloat(document.getElementById("employment_years").value);
+    if (isNaN(exp) || exp < 0) {
+      showInlineError("employment_years", "Enter valid non-negative years of experience.");
+      isValid = false;
+    } else {
+      clearInlineError("employment_years");
+    }
+
+    // Monthly Income
+    const income = parseFloat(document.getElementById("monthly_income").value);
+    if (isNaN(income) || income < 15000) {
+      showInlineError("monthly_income", "Minimum net monthly income cutoff is ₹15,000.");
+      isValid = false;
+    } else {
+      clearInlineError("monthly_income");
+    }
+
+    return isValid;
+  }
+
+  function validateStep2() {
+    let isValid = true;
+
+    // Credit Score
+    const score = parseInt(document.getElementById("credit_score").value);
+    if (isNaN(score) || score < 300 || score > 900) {
+      showInlineError("credit_score", "CIBIL score must be between 300 and 900.");
+      isValid = false;
+    } else {
+      clearInlineError("credit_score");
+    }
+
+    // Existing EMI
+    const emi = parseFloat(document.getElementById("existing_emi").value);
+    if (isNaN(emi) || emi < 0) {
+      showInlineError("existing_emi", "Existing EMI cannot be negative.");
+      isValid = false;
+    } else {
+      clearInlineError("existing_emi");
+    }
+
+    // Missed Payments
+    const missed = parseInt(document.getElementById("missed_payments").value);
+    if (isNaN(missed) || missed < 0) {
+      showInlineError("missed_payments", "Missed payments cannot be negative.");
+      isValid = false;
+    } else {
+      clearInlineError("missed_payments");
+    }
+
+    // Loan Amount
+    const amount = parseFloat(document.getElementById("loan_amount").value);
+    if (isNaN(amount) || amount < 10000) {
+      showInlineError("loan_amount", "Requested loan must be at least ₹10,000.");
+      isValid = false;
+    } else {
+      clearInlineError("loan_amount");
+    }
+
+    return isValid;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Live CIBIL Badge & Slider Sync
+  // ----------------------------------------------------------------------------
+  function syncCibilScore(val) {
+    val = Math.min(900, Math.max(300, parseInt(val) || 650));
+    const range = document.getElementById("credit_score_range");
+    const num = document.getElementById("credit_score");
+    const badge = document.getElementById("cibilScoreBadge");
+
+    if (range) range.value = val;
+    if (num) num.value = val;
+
+    if (badge) {
+      if (val >= 750) {
+        badge.className = "text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-[#10b981] shadow-xs transition-colors";
+        badge.textContent = `Excellent (${val})`;
+      } else if (val >= 650) {
+        badge.className = "text-xs font-extrabold px-3 py-1 rounded-full bg-orange-100 text-[#f97316] shadow-xs transition-colors";
+        badge.textContent = `Good / Fair (${val})`;
+      } else {
+        badge.className = "text-xs font-extrabold px-3 py-1 rounded-full bg-rose-100 text-[#ec4899] shadow-xs transition-colors";
+        badge.textContent = `Subprime / High Risk (${val})`;
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------------------
+  // Live EMI Preview (Assumes ~11% Rate)
+  // ----------------------------------------------------------------------------
+  function updateLiveEmiPreview() {
+    const amount = parseFloat(document.getElementById("loan_amount")?.value || 0);
+    const tenureMonths = parseInt(document.getElementById("tenure_months")?.value || 36);
+    const previewEl = document.getElementById("liveEmiPreview");
+    if (!previewEl) return;
+
+    if (amount <= 0 || tenureMonths <= 0) {
+      previewEl.textContent = "₹0 / mo";
+      return;
+    }
+
+    const annualRate = 11.0; // 11% benchmark preview
+    const r = (annualRate / 12) / 100;
+    const factor = Math.pow(1 + r, tenureMonths);
+    const emi = (amount * r * factor) / (factor - 1);
+
+    previewEl.textContent = `₹${Math.round(emi).toLocaleString("en-IN")} / mo`;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Sample Applicant Loader
+  // ----------------------------------------------------------------------------
+  function loadSampleData(sampleKey) {
+    const data = SAMPLE_APPLICANTS[sampleKey];
+    if (!data) return;
+
+    // Populate fields
+    document.getElementById("name").value = data.name;
+    document.getElementById("age").value = data.age;
+    document.getElementById("employment_type").value = data.employment_type;
+    document.getElementById("employment_years").value = data.employment_years;
+    document.getElementById("monthly_income").value = data.monthly_income;
+
+    syncCibilScore(data.credit_score);
+    document.getElementById("existing_emi").value = data.existing_emi;
+    document.getElementById("credit_utilization").value = data.credit_utilization;
+    document.getElementById("creditUtilVal").textContent = `${data.credit_utilization}%`;
+    document.getElementById("missed_payments").value = data.missed_payments;
+
+    const loanTypeSelect = document.getElementById("loan_type");
+    if (loanTypeSelect) {
+      for (let i = 0; i < loanTypeSelect.options.length; i++) {
+        if (loanTypeSelect.options[i].value.toLowerCase() === data.loan_type.toLowerCase()) {
+          loanTypeSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    document.getElementById("tenure_months").value = data.tenure_months;
+    document.getElementById("loan_amount").value = data.loan_amount;
+
+    // Clear existing inline errors
+    ["name", "age", "employment_years", "monthly_income", "credit_score", "existing_emi", "loan_amount"].forEach(clearInlineError);
+
+    updateLiveEmiPreview();
+  }
+
+  // ----------------------------------------------------------------------------
+  // Toast Notifications
+  // ----------------------------------------------------------------------------
+  function showToast(title, message) {
+    const toast = document.getElementById("errorToast");
+    const tTitle = document.getElementById("toastTitle");
+    const tMsg = document.getElementById("toastMessage");
+    if (!toast) return;
+
+    if (tTitle) tTitle.textContent = title;
+    if (tMsg) tMsg.textContent = message;
+
+    toast.classList.remove("hidden");
+    setTimeout(() => {
+      hideToast();
+    }, 6000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById("errorToast");
+    if (toast) toast.classList.add("hidden");
+  }
+
+  // ----------------------------------------------------------------------------
+  // Form Submission via fetch POST /api/evaluate
+  // ----------------------------------------------------------------------------
+  document.addEventListener("DOMContentLoaded", function() {
+    
+    // 1. Pre-fill income from URL Query Parameter (?income=VALUE)
+    const urlParams = new URLSearchParams(window.location.search);
+    const prefillIncome = urlParams.get("income");
+    if (prefillIncome) {
+      const incEl = document.getElementById("monthly_income");
+      if (incEl) incEl.value = prefillIncome;
+    }
+    const prefillLoanType = urlParams.get("loan_type");
+    if (prefillLoanType) {
+      const ltEl = document.getElementById("loan_type");
+      if (ltEl) {
+        for (let i = 0; i < ltEl.options.length; i++) {
+          if (ltEl.options[i].value.toLowerCase() === prefillLoanType.toLowerCase()) {
+            ltEl.selectedIndex = i;
+            break;
+          }
+        }
+      }
+    }
+
+    // 2. Sample Applicant Dropdown Event Handlers
+    const sampleBtn = document.getElementById("sampleApplicantBtn");
+    const sampleMenu = document.getElementById("sampleApplicantMenu");
+    const sampleOptions = document.querySelectorAll(".sample-applicant-option");
+
+    if (sampleBtn && sampleMenu) {
+      sampleBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        sampleMenu.classList.toggle("hidden");
+      });
+
+      sampleOptions.forEach((opt) => {
+        opt.addEventListener("click", function(e) {
+          e.stopPropagation();
+          const key = this.getAttribute("data-sample");
+          loadSampleData(key);
+          sampleMenu.classList.add("hidden");
+        });
+      });
+
+      document.addEventListener("click", function(e) {
+        if (!document.getElementById("sampleApplicantDropdownContainer")?.contains(e.target)) {
+          sampleMenu.classList.add("hidden");
+        }
+      });
+    }
+
+    // 3. Credit Score Slider & Input Events
+    const cibilRange = document.getElementById("credit_score_range");
+    const cibilInput = document.getElementById("credit_score");
+    if (cibilRange && cibilInput) {
+      cibilRange.addEventListener("input", (e) => syncCibilScore(e.target.value));
+      cibilInput.addEventListener("input", (e) => syncCibilScore(e.target.value));
+    }
+
+    // 4. Credit Utilization Slider
+    const utilRange = document.getElementById("credit_utilization");
+    const utilVal = document.getElementById("creditUtilVal");
+    if (utilRange && utilVal) {
+      utilRange.addEventListener("input", (e) => {
+        utilVal.textContent = `${e.target.value}%`;
+      });
+    }
+
+    // 5. Loan Amount & Tenure change -> Live EMI preview
+    const amtInput = document.getElementById("loan_amount");
+    const tenureSelect = document.getElementById("tenure_months");
+    if (amtInput) amtInput.addEventListener("input", updateLiveEmiPreview);
+    if (tenureSelect) tenureSelect.addEventListener("change", updateLiveEmiPreview);
+
+    // Initial EMI Preview
+    updateLiveEmiPreview();
+
+    // 6. Submit Form
+    const form = document.getElementById("loanIntakeForm");
+    const submitBtn = document.getElementById("submitEvaluateBtn");
+    const spinner = document.getElementById("submitSpinner");
+    const btnText = document.getElementById("submitBtnText");
+
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      if (!validateStep1()) {
+        goToStep(1);
+        return;
+      }
+      if (!validateStep2()) {
+        goToStep(2);
+        return;
+      }
+
+      // Payload Construction
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        age: parseInt(document.getElementById("age").value),
+        employment_type: parseInt(document.getElementById("employment_type").value),
+        employment_years: parseFloat(document.getElementById("employment_years").value),
+        monthly_income: parseFloat(document.getElementById("monthly_income").value),
+        credit_score: parseInt(document.getElementById("credit_score").value),
+        existing_emi: parseFloat(document.getElementById("existing_emi").value),
+        credit_utilization: parseFloat(document.getElementById("credit_utilization").value),
+        missed_payments: parseInt(document.getElementById("missed_payments").value),
+        loan_type: document.getElementById("loan_type").value.toLowerCase(),
+        loan_amount: parseFloat(document.getElementById("loan_amount").value),
+        tenure_months: parseInt(document.getElementById("tenure_months").value)
+      };
+
+      // Set Loading UI State
+      submitBtn.disabled = true;
+      spinner.classList.remove("hidden");
+      btnText.textContent = "Scoring Credit Risk...";
+
+      try {
+        const response = await fetch("/api/evaluate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === "success") {
+          btnText.textContent = "Decision Generated! Redirecting...";
+          // Redirect to /result/<id>
+          window.location.href = data.redirect_url || `/result/${data.application_id}`;
+        } else {
+          // Failure handling
+          const errMsg = data.message || (data.errors ? data.errors.join(", ") : "Failed to evaluate application.");
+          showToast("Underwriting Error (HTTP " + response.status + ")", errMsg);
+          submitBtn.disabled = false;
+          spinner.classList.add("hidden");
+          btnText.textContent = "Submit for AI Evaluation";
+        }
+      } catch (err) {
+        showToast("Network Connection Error", "Unable to reach the underwriting API server. Please verify your connection.");
+        submitBtn.disabled = false;
+        spinner.classList.add("hidden");
+        btnText.textContent = "Submit for AI Evaluation";
+      }
+    });
+
+  });
+</script>
+{% endblock %}

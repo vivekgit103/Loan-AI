@@ -1,0 +1,287 @@
+/* ==============================================================================
+   TrustScore AI - Indian Retail Loan Underwriting & Risk Assessment System
+   Design System Stylesheet
+   ==============================================================================
+   Typography: 'Plus Jakarta Sans' (Weights 400-800)
+   Tokens:
+     - Background: #f8f9fc
+     - Cards: #ffffff, border 1px #f3f4f6, border-radius 24px, shadow-sm
+       hover: translateY(-2px) + stronger shadow, transition-all duration-300
+     - Text Primary: #1e293b, Text Secondary: #64748b
+     - Colors:
+         Blue (Primary):     #0d6efd
+         Orange (Secondary): #f97316
+         Green (Success):    #10b981
+         Pink:               #ec4899
+         Purple:             #a855f7
+     - Buttons: border-radius 12px; active CTA has shadow-lg with blue at 20% opacity
+     - Headers: font-weight 700-800
+     - Labels: font-weight 500 muted (#64748b)
+   ============================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --bg-surface: #f8f9fc;
+  --bg-card: #ffffff;
+  --border-card: #f3f4f6;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --color-primary: #0d6efd;
+  --color-primary-hover: #0b5ed7;
+  --color-secondary: #f97316;
+  --color-success: #10b981;
+  --color-pink: #ec4899;
+  --color-purple: #a855f7;
+  --radius-card: 24px;
+  --radius-btn: 12px;
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 12px 28px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  --shadow-cta: 0 10px 25px -5px rgba(13, 110, 253, 0.20);
+  --shadow-cta-hover: 0 14px 28px -5px rgba(13, 110, 253, 0.30);
+}
+
+/* Base Document Styles */
+html, body {
+  font-family: var(--font-family);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headers & Labels */
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-family);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.font-heading-heavy {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+label, .label-muted {
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Design System Card Component */
+.app-card, .design-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-card:hover, .design-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Button System */
+.btn-radius {
+  border-radius: var(--radius-btn);
+}
+
+.btn-cta {
+  border-radius: var(--radius-btn);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: var(--shadow-cta);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-cta:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-cta-hover);
+}
+
+.btn-cta:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 15px -3px rgba(13, 110, 253, 0.22);
+}
+
+/* Thin Custom Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* Refined Form Range Sliders (CIBIL Score & Utilization) */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.35);
+  transition: transform 0.15s ease-in-out, background-color 0.15s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background: var(--color-primary-hover);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.35);
+  transition: transform 0.15s ease-in-out, background-color 0.15s;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  background: var(--color-primary-hover);
+}
+
+/* Custom CSS Bar Chart Styling for #chart-area */
+.chart-bar-container {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  position: relative;
+}
+
+.chart-bar {
+  border-radius: 12px 12px 4px 4px;
+  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, transform 0.2s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.chart-bar:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+}
+
+.chart-tooltip-badge {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.chart-hover-popover {
+  position: fixed;
+  background-color: #111827;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.chart-grid-line {
+  border-top: 1px dashed #f1f5f9;
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+/* Print Styles for Sanction Letters & Underwriting Reports */
+@media print {
+  aside, header, nav, .no-print, button, a[href*="apply"] {
+    display: none !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    font-size: 11pt;
+  }
+
+  .app-card, .design-card {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    transform: none !important;
+  }
+}

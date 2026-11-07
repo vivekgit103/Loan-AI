@@ -1,0 +1,781 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | LoanIQ - Credit Portfolio Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+  <!-- 1. Header: Greeting + Pill Search Bar (Live Filters Recent Applications Table) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-extrabold text-[#1e293b] tracking-tight flex items-center gap-2">
+        <span>Welcome back, Officer</span>
+        <span class="inline-block animate-pulse">👋</span>
+      </h1>
+      <p class="text-xs font-medium text-[#64748b] mt-1">
+        Overview of real-time underwriting velocity, risk distributions, and institutional lending metrics.
+      </p>
+    </div>
+
+    <!-- Live Table Filter Pill Search Bar -->
+    <div class="relative w-full md:w-80">
+      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <svg class="w-4 h-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <input type="text" 
+             id="officerTableSearch" 
+             placeholder="Search applicants, loan types..." 
+             class="w-full bg-white rounded-full pl-11 pr-5 py-2.5 text-xs text-[#1e293b] placeholder-[#64748b] border border-[#f3f4f6] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0d6efd] focus:border-transparent transition-all"
+             autocomplete="off">
+    </div>
+  </div>
+
+  <!-- 2. Stats Row: 4 Icon-Left Cards (Blue, Green, Purple, Orange) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    
+    <!-- Total Applications - Blue -->
+    <div class="app-card p-5 flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-[16px] bg-[#edf5ff] text-[#0d6efd] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-medium text-[#64748b] truncate">Total Applications</p>
+        <p class="text-2xl font-bold text-[#1e293b] mt-0.5 tracking-tight">{{ stats.total_applications or 0 }}</p>
+      </div>
+    </div>
+
+    <!-- Approval Rate - Green -->
+    <div class="app-card p-5 flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-[16px] bg-[#ecfdf5] text-[#10b981] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-medium text-[#64748b] truncate">Approval Rate</p>
+        <p class="text-2xl font-bold text-[#10b981] mt-0.5 tracking-tight">{{ stats.approval_rate or 0 }}%</p>
+      </div>
+    </div>
+
+    <!-- Avg Credit Score - Purple -->
+    <div class="app-card p-5 flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-[16px] bg-[#faf5ff] text-[#a855f7] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-medium text-[#64748b] truncate">Avg Credit Score</p>
+        <p class="text-2xl font-bold text-[#1e293b] mt-0.5 tracking-tight">{{ stats.avg_credit_score or 0 }}</p>
+      </div>
+    </div>
+
+    <!-- High-Risk Cases - Orange -->
+    <div class="app-card p-5 flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-[16px] bg-[#fff7ed] text-[#f97316] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-medium text-[#64748b] truncate">High-Risk Cases</p>
+        <p class="text-2xl font-bold text-[#f97316] mt-0.5 tracking-tight">
+          {{ stats.risk_band_counts.get('High', stats.risk_band_counts.get('High Risk', stats.rejected_count or 0)) }}
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. Quick Eligibility Check Card (Radius 24px, bg #fff7ed, decorative blob in #f97316 at 20% opacity) -->
+  <div class="relative overflow-hidden rounded-[24px] bg-[#fff7ed] border border-orange-200/70 p-6 md:p-8 shadow-sm">
+    <!-- Decorative organic blob SVG in #f97316 at 20% opacity -->
+    <div class="absolute -right-12 -top-16 w-80 h-80 pointer-events-none opacity-20">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full fill-[#f97316]">
+        <path d="M42.7,-68.8C54.9,-61.5,64,-49.6,71.2,-36.4C78.4,-23.2,83.7,-8.7,81.4,4.7C79.2,18.1,69.4,30.3,59.3,41.4C49.1,52.4,38.6,62.3,25.9,69.5C13.2,76.8,-1.7,81.4,-16.4,79.2C-31.1,77.1,-45.5,68.2,-56.3,56.7C-67.1,45.2,-74.3,31.1,-77.9,15.7C-81.5,0.4,-81.4,-16.1,-74.7,-29.4C-68,-42.6,-54.6,-52.6,-40.8,-59.2C-27,-65.8,-13.5,-69.1,0.6,-70C14.7,-70.9,29.4,-69.4,42.7,-68.8Z" transform="translate(100 100)" />
+      </svg>
+    </div>
+
+    <div class="relative z-10 max-w-2xl space-y-4">
+      <div class="flex items-center space-x-2">
+        <span class="w-2 h-2 rounded-full bg-[#f97316] animate-pulse"></span>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-[#f97316]">Instant Sanction Assessment</span>
+      </div>
+
+      <div>
+        <h2 class="text-xl md:text-2xl font-extrabold text-[#1e293b] tracking-tight">Quick Eligibility & Risk Sizing</h2>
+        <p class="text-xs text-[#64748b] mt-1 leading-relaxed">
+          Screen borrowing capacity in real time based on monthly net earnings, debt burden (FOIR), and institutional guidelines.
+        </p>
+      </div>
+
+      <!-- White Input Wrapper with Embedded CTA Button -->
+      <form id="quickEligibilityForm" class="flex items-center pt-1" onsubmit="event.preventDefault(); handleQuickEligibility();">
+        <div class="relative w-full max-w-md bg-white rounded-[16px] border border-orange-200 shadow-sm p-1.5 flex items-center focus-within:ring-2 focus-within:ring-[#f97316]">
+          <span class="pl-3 text-sm font-bold text-[#64748b]">₹</span>
+          <input type="number" 
+                 id="quickIncomeInput"
+                 placeholder="Enter monthly income (₹)" 
+                 min="15000" 
+                 step="1000"
+                 required
+                 class="w-full bg-transparent pl-2 pr-2 py-2 text-xs md:text-sm text-[#1e293b] placeholder-[#64748b] focus:outline-none font-semibold">
+          <button type="submit" 
+                  class="shrink-0 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold px-5 py-2.5 rounded-[12px] shadow-sm hover:shadow transition-all duration-200">
+            Check
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Chart Area Placeholder (2/3 width) + Risk Distribution Card (1/3 width) -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="risk-analysis">
+    
+    <!-- Chart Area Placeholder (2/3 width) - Rendered via custom CSS bar chart in static/js/app.js -->
+    <div id="chart-area" class="lg:col-span-2 app-card p-6 flex flex-col justify-between min-h-[380px] relative">
+      <!-- Loading Skeleton / Fallback placeholder (Replaced dynamically by initMonthlyBarChart) -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#f3f4f6]">
+        <div>
+          <h3 class="text-sm font-bold text-[#1e293b]">Underwriting Activity & Monthly Decision Trends</h3>
+          <p class="text-[11px] text-[#64748b]">Monthly loan volume breakdown (Approved, Review, Rejected)</p>
+        </div>
+        <div class="text-[11px] font-bold text-[#0d6efd] bg-blue-50 px-2.5 py-0.5 rounded-full animate-pulse">
+          Loading Live Analytics...
+        </div>
+      </div>
+      <div class="flex-1 flex items-center justify-center p-8 text-center text-[#64748b]">
+        <div class="space-y-2">
+          <div class="w-8 h-8 mx-auto border-2 border-[#0d6efd] border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-xs font-semibold">Connecting to /api/stats...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk Distribution Card (1/3 width) -->
+    <div class="app-card p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-[#f3f4f6]">
+          <h3 class="text-sm font-bold text-[#1e293b]">Risk Distribution</h3>
+          <span class="text-[10px] font-bold text-[#64748b] bg-slate-100 px-2 py-0.5 rounded-full">Calibrated PD</span>
+        </div>
+
+        {% set total_scored = stats.total_applications or 1 %}
+        {% set low_count = stats.risk_band_counts.get('Low', stats.risk_band_counts.get('Low Risk', stats.approved_count or 0)) %}
+        {% set med_count = stats.risk_band_counts.get('Medium', stats.risk_band_counts.get('Moderate Risk', stats.review_count or 0)) %}
+        {% set high_count = stats.risk_band_counts.get('High', stats.risk_band_counts.get('High Risk', stats.rejected_count or 0)) %}
+
+        {% set low_pct = ((low_count / total_scored) * 100) | round(1) %}
+        {% set med_pct = ((med_count / total_scored) * 100) | round(1) %}
+        {% set high_pct = ((high_count / total_scored) * 100) | round(1) %}
+
+        <div class="space-y-4 mt-5">
+          <!-- Low Risk - Green -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-[#1e293b] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+                Low Risk (PD &lt; 0.15)
+              </span>
+              <span class="font-bold text-[#10b981]">{{ low_pct }}% ({{ low_count }})</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-[#10b981] h-full rounded-full transition-all duration-500" style="width: {{ low_pct }}%;"></div>
+            </div>
+          </div>
+
+          <!-- Medium Risk - Orange -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-[#1e293b] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#f97316]"></span>
+                Medium Risk (0.15–0.35)
+              </span>
+              <span class="font-bold text-[#f97316]">{{ med_pct }}% ({{ med_count }})</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-[#f97316] h-full rounded-full transition-all duration-500" style="width: {{ med_pct }}%;"></div>
+            </div>
+          </div>
+
+          <!-- High Risk - Pink -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-[#1e293b] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#ec4899]"></span>
+                High Risk (PD &gt; 0.35)
+              </span>
+              <span class="font-bold text-[#ec4899]">{{ high_pct }}% ({{ high_count }})</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-[#ec4899] h-full rounded-full transition-all duration-500" style="width: {{ high_pct }}%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-[#f3f4f6] mt-4">
+        <p class="text-[11px] text-[#64748b] leading-relaxed">
+          Statutory underwriting cuts off applicants exceeding <strong>65% FOIR</strong> or falling below <strong>550 CIBIL</strong>.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 5. Loan Product Grid (3 columns): Personal, Home, Auto, Education, Business, Gold -->
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-[#1e293b] tracking-tight">Institutional Retail Loan Catalog</h2>
+        <p class="text-xs text-[#64748b]">Select a financing facility to initiate standard underwriting</p>
+      </div>
+      <span class="text-xs font-semibold text-[#0d6efd] bg-blue-50 px-3 py-1 rounded-full">6 Prime Categories</span>
+    </div>
+
+    <!-- Loan Catalog Cards (Jinja Loop across loan_products) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for product in loan_products %}
+        <div class="app-card p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="flex items-start justify-between">
+              <div class="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 
+                {% if product.type == 'Home' %}bg-blue-50 text-[#0d6efd]
+                {% elif product.type == 'Personal' %}bg-orange-50 text-[#f97316]
+                {% elif product.type == 'Auto' %}bg-purple-50 text-[#a855f7]
+                {% elif product.type == 'Education' %}bg-pink-50 text-[#ec4899]
+                {% elif product.type == 'Business' %}bg-emerald-50 text-[#10b981]
+                {% else %}bg-amber-50 text-amber-600{% endif %}">
+                
+                {% if product.type == 'Home' %}
+                  <!-- Home Icon -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                {% elif product.type == 'Personal' %}
+                  <!-- Personal Icon -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                {% elif product.type == 'Auto' %}
+                  <!-- Auto Icon -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4zm-9-8l2-4h6l2 4M3 13h18l-1.5-6.5A2 2 0 0017.55 5H6.45a2 2 0 00-1.95 1.5L3 13z" />
+                  </svg>
+                {% elif product.type == 'Education' %}
+                  <!-- Education Icon -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5" />
+                  </svg>
+                {% elif product.type == 'Business' %}
+                  <!-- Business Icon -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                {% else %}
+                  <!-- Gold Icon -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                {% endif %}
+              </div>
+
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-[#64748b]">
+                {{ product.tag }}
+              </span>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-[#1e293b]">{{ product.name }}</h3>
+              <p class="text-xs text-[#0d6efd] font-bold mt-0.5">
+                From {{ "%.2f"|format(product.base_rate) }}% p.a.
+              </p>
+            </div>
+
+            <div class="space-y-1.5 pt-2 border-t border-[#f3f4f6] text-[11px] text-[#64748b]">
+              <div class="flex justify-between">
+                <span>Max Sanction:</span>
+                <span class="font-bold text-[#1e293b]">₹{{ "{:,.0f}".format(product.max_amount) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Tenure Range:</span>
+                <span class="font-semibold text-[#1e293b]">Up to {{ product.max_tenure }} mos</span>
+              </div>
+            </div>
+          </div>
+
+          <a href="{{ url_for('apply_loan') }}?loan_type={{ product.type }}" 
+             class="w-full flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-[12px] bg-slate-50 hover:bg-[#0d6efd] text-xs font-bold text-[#1e293b] hover:text-white transition-all duration-200">
+            <span>Apply</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 6. Recent Applications Table (Full Width, Search Filterable, Row Hover bg-slate-50) -->
+  <div class="app-card overflow-hidden" id="reports">
+    <div class="p-6 flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#f3f4f6] gap-2">
+      <div>
+        <h2 class="text-base font-bold text-[#1e293b]">Recent Underwriting Cases</h2>
+        <p class="text-xs text-[#64748b]">Most recently processed applicants across retail channels</p>
+      </div>
+      <a href="{{ url_for('list_applications') }}" 
+         class="text-xs font-bold text-[#0d6efd] hover:text-[#0b5ed7] inline-flex items-center space-x-1">
+        <span>View Full Registry ({{ stats.total_applications or 0 }})</span>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- Table Container -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs" id="recentApplicationsTable">
+        <thead class="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-[#64748b] border-b border-[#f3f4f6]">
+          <tr>
+            <th class="py-3.5 px-6">Applicant</th>
+            <th class="py-3.5 px-6">Loan Type</th>
+            <th class="py-3.5 px-6">Amount</th>
+            <th class="py-3.5 px-6">Credit Score</th>
+            <th class="py-3.5 px-6">Risk</th>
+            <th class="py-3.5 px-6">Decision</th>
+            <th class="py-3.5 px-6 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#f3f4f6]">
+          {% if recent_applications %}
+            {% for app in recent_applications %}
+              <tr class="hover:bg-slate-50 transition-colors application-table-row">
+                
+                <!-- Applicant Name + Age -->
+                <td class="py-4 px-6">
+                  <div class="font-bold text-[#1e293b]">{{ app.name }}</div>
+                  <div class="text-[11px] text-[#64748b]">Age {{ app.age }} &bull; {{ app.employment_type }}</div>
+                </td>
+
+                <!-- Loan Type -->
+                <td class="py-4 px-6 font-semibold text-[#1e293b]">
+                  {{ app.loan_type }} Loan
+                </td>
+
+                <!-- Amount -->
+                <td class="py-4 px-6">
+                  <div class="font-bold text-[#1e293b]">₹{{ "{:,.0f}".format(app.loan_amount) }}</div>
+                  <div class="text-[10px] text-[#64748b]">{{ app.tenure_months }} mos</div>
+                </td>
+
+                <!-- Credit Score -->
+                <td class="py-4 px-6">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold 
+                    {% if app.credit_score >= 750 %}bg-emerald-50 text-[#10b981]
+                    {% elif app.credit_score >= 650 %}bg-blue-50 text-[#0d6efd]
+                    {% elif app.credit_score >= 550 %}bg-orange-50 text-[#f97316]
+                    {% else %}bg-pink-50 text-[#ec4899]{% endif %}">
+                    {{ app.credit_score }}
+                  </span>
+                </td>
+
+                <!-- Risk Band Badge (Green/Orange/Pink) -->
+                <td class="py-4 px-6">
+                  {% set rband = app.risk_band or 'Moderate Risk' %}
+                  {% if 'Low' in rband %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-[#10b981]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#10b981] mr-1.5"></span>Low Risk
+                    </span>
+                  {% elif 'High' in rband %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#fdf2f8] text-[#ec4899]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#ec4899] mr-1.5"></span>High Risk
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#fff7ed] text-[#f97316]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#f97316] mr-1.5"></span>Medium Risk
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Decision Badge (Green/Orange/Pink) -->
+                <td class="py-4 px-6">
+                  {% if app.decision == 'Approved' %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-[#10b981]">
+                      Approved
+                    </span>
+                  {% elif app.decision == 'Review' %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#fff7ed] text-[#f97316]">
+                      Manual Review
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#fdf2f8] text-[#ec4899]">
+                      Rejected
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Action View Details -->
+                <td class="py-4 px-6 text-right">
+                  <a href="{{ url_for('view_result', application_id=app.id) }}" 
+                     class="inline-flex items-center space-x-1 text-[11px] font-bold text-[#0d6efd] hover:text-[#0b5ed7] bg-[#edf5ff] hover:bg-blue-100/70 px-3 py-1.5 rounded-[8px] transition-colors">
+                    <span>View</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
+                </td>
+
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="py-8 px-6 text-center text-[#64748b]">
+                No applications on record. Run your first underwriting evaluation to generate logs.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block right %}
+<div class="space-y-6">
+
+  <!-- 1. Applicant Profile (Latest Applicant) -->
+  {% set latest = recent_applications[0] if (recent_applications and recent_applications|length > 0) else None %}
+  <div class="app-card p-4 space-y-4">
+    <div class="flex items-center space-x-3">
+      <!-- Inline SVG Circular Initial Avatar -->
+      <div class="relative w-12 h-12 rounded-full bg-gradient-to-tr from-[#0d6efd] via-indigo-600 to-[#a855f7] p-0.5 shadow-md shadow-blue-500/20 shrink-0">
+        <svg class="w-full h-full rounded-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="48" fill="#1e293b" />
+          <circle cx="50" cy="50" r="46" fill="url(#avatarGradient)" />
+          <defs>
+            <linearGradient id="avatarGradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#0d6efd" />
+              <stop offset="1" stop-color="#8b5cf6" />
+            </linearGradient>
+          </defs>
+          <text x="50" y="58" font-family="'Plus Jakarta Sans', sans-serif" font-size="34" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">
+            {{ (latest.name[0] | upper) if latest else 'A' }}
+          </text>
+        </svg>
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <h4 class="text-sm font-bold text-[#1e293b] truncate">
+          {{ latest.name if latest else 'Aarav Sharma' }}
+        </h4>
+        <p class="text-[11px] font-semibold text-[#0d6efd] flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+          Latest applicant
+        </p>
+      </div>
+    </div>
+
+    <!-- Stats List: Credit Score, Monthly Income, DTI, Risk -->
+    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[#f3f4f6] text-xs">
+      <div class="bg-slate-50 p-2.5 rounded-[12px] border border-slate-100">
+        <span class="text-[10px] font-medium text-[#64748b] block">Credit Score</span>
+        <span class="text-xs font-bold text-[#1e293b]">
+          {{ latest.credit_score if latest else 780 }}
+        </span>
+      </div>
+
+      <div class="bg-slate-50 p-2.5 rounded-[12px] border border-slate-100">
+        <span class="text-[10px] font-medium text-[#64748b] block">Monthly Income</span>
+        <span class="text-xs font-bold text-[#1e293b]">
+          ₹{{ "{:,.0f}".format(latest.monthly_income) if latest else '90,000' }}
+        </span>
+      </div>
+
+      <div class="bg-slate-50 p-2.5 rounded-[12px] border border-slate-100">
+        <span class="text-[10px] font-medium text-[#64748b] block">DTI / FOIR</span>
+        <span class="text-xs font-bold text-[#1e293b]">
+          {% if latest %}
+            {{ (latest.dti * 100)|round(1) if latest.dti else '38.2%' }}%
+          {% else %}
+            38.2%
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="bg-slate-50 p-2.5 rounded-[12px] border border-slate-100">
+        <span class="text-[10px] font-medium text-[#64748b] block">Risk Level</span>
+        <span class="text-xs font-bold text-[#10b981]">
+          {{ latest.risk_band if latest else 'Low Risk' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Mini Calendar: Horizontal Day Scroller (Next 14 Days) labelled "EMI Due Dates" -->
+  <div class="app-card p-4 space-y-3">
+    <div class="flex items-center justify-between">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-[#1e293b]">EMI Due Dates</h4>
+        <p class="text-[10px] text-[#64748b]">Scheduled billing collection dates</p>
+      </div>
+      <span class="text-[10px] font-bold text-[#ec4899] bg-pink-50 px-2 py-0.5 rounded-full">Next 14 Days</span>
+    </div>
+
+    <!-- Horizontal Day Scroller -->
+    <div id="emiCalendarScroller" class="flex items-center space-x-2 overflow-x-auto custom-scrollbar py-2 px-1 -mx-1 select-none">
+      <!-- Days rendered dynamically via JavaScript -->
+    </div>
+  </div>
+
+  <!-- 3. "Upcoming" Vertical List (3 Items: EMI Review, Document Verification, Risk Committee) -->
+  <div class="app-card p-4 space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-[#f3f4f6]">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-[#1e293b]">Upcoming Pipeline</h4>
+      <span class="text-[10px] font-semibold text-[#64748b]">Today</span>
+    </div>
+
+    <div class="space-y-3">
+      <!-- Item 1: EMI Review -->
+      <div class="flex items-start space-x-3 p-2 rounded-[12px] hover:bg-slate-50 transition-colors">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#0d6efd] mt-1 shrink-0"></span>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-[#1e293b]">EMI Review</p>
+          <p class="text-[11px] text-[#64748b]">10:30 AM &bull; Automated e-NACH debits</p>
+        </div>
+      </div>
+
+      <!-- Item 2: Document Verification -->
+      <div class="flex items-start space-x-3 p-2 rounded-[12px] hover:bg-slate-50 transition-colors">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#f97316] mt-1 shrink-0"></span>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-[#1e293b]">Document Verification</p>
+          <p class="text-[11px] text-[#64748b]">02:15 PM &bull; KYC & bureau reconciliation</p>
+        </div>
+      </div>
+
+      <!-- Item 3: Risk Committee -->
+      <div class="flex items-start space-x-3 p-2 rounded-[12px] hover:bg-slate-50 transition-colors">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#ec4899] mt-1 shrink-0"></span>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-[#1e293b]">Risk Committee</p>
+          <p class="text-[11px] text-[#64748b]">04:45 PM &bull; High exposure appraisal</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Document Checklist (Todo List with Rounded Custom Checkboxes, Strike-Through & localStorage) -->
+  <div class="app-card p-4 space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-[#f3f4f6]">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-[#1e293b]">Document Checklist</h4>
+        <p class="text-[10px] text-[#64748b]">Statutory retail compliance</p>
+      </div>
+      <button type="button" 
+              id="resetChecklistBtn" 
+              class="text-[10px] font-bold text-[#0d6efd] hover:text-[#0b5ed7] transition-colors">
+        Reset
+      </button>
+    </div>
+
+    <div class="space-y-2 text-xs" id="documentChecklist">
+      <!-- PAN Card -->
+      <label class="flex items-center space-x-3 p-2 rounded-[10px] hover:bg-slate-50 cursor-pointer transition-colors select-none">
+        <input type="checkbox" data-doc="pan" class="doc-checkbox w-4 h-4 rounded-full border-slate-300 text-[#0d6efd] focus:ring-[#0d6efd] transition-all">
+        <span class="doc-label font-medium text-[#1e293b] transition-all">PAN Card</span>
+      </label>
+
+      <!-- Aadhaar -->
+      <label class="flex items-center space-x-3 p-2 rounded-[10px] hover:bg-slate-50 cursor-pointer transition-colors select-none">
+        <input type="checkbox" data-doc="aadhaar" class="doc-checkbox w-4 h-4 rounded-full border-slate-300 text-[#0d6efd] focus:ring-[#0d6efd] transition-all">
+        <span class="doc-label font-medium text-[#1e293b] transition-all">Aadhaar Card</span>
+      </label>
+
+      <!-- 3 Months Salary Slips -->
+      <label class="flex items-center space-x-3 p-2 rounded-[10px] hover:bg-slate-50 cursor-pointer transition-colors select-none">
+        <input type="checkbox" data-doc="salary_slips" class="doc-checkbox w-4 h-4 rounded-full border-slate-300 text-[#0d6efd] focus:ring-[#0d6efd] transition-all">
+        <span class="doc-label font-medium text-[#1e293b] transition-all">3 Months Salary Slips</span>
+      </label>
+
+      <!-- Bank Statement -->
+      <label class="flex items-center space-x-3 p-2 rounded-[10px] hover:bg-slate-50 cursor-pointer transition-colors select-none">
+        <input type="checkbox" data-doc="bank_statement" class="doc-checkbox w-4 h-4 rounded-full border-slate-300 text-[#0d6efd] focus:ring-[#0d6efd] transition-all">
+        <span class="doc-label font-medium text-[#1e293b] transition-all">Bank Statement (6 Mos)</span>
+      </label>
+
+      <!-- Address Proof -->
+      <label class="flex items-center space-x-3 p-2 rounded-[10px] hover:bg-slate-50 cursor-pointer transition-colors select-none">
+        <input type="checkbox" data-doc="address_proof" class="doc-checkbox w-4 h-4 rounded-full border-slate-300 text-[#0d6efd] focus:ring-[#0d6efd] transition-all">
+        <span class="doc-label font-medium text-[#1e293b] transition-all">Address Proof (Utility Bill)</span>
+      </label>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // 1. Quick Eligibility Form Handler
+  function handleQuickEligibility() {
+    const incomeInput = document.getElementById("quickIncomeInput");
+    if (!incomeInput) return;
+    const incomeVal = parseFloat(incomeInput.value);
+    if (!incomeVal || incomeVal <= 0) {
+      alert("Please enter a valid monthly income in ₹.");
+      incomeInput.focus();
+      return;
+    }
+    // Redirect to /apply with income pre-populated
+    window.location.href = "{{ url_for('apply_loan') }}?income=" + encodeURIComponent(incomeVal);
+  }
+
+  // 2. Live Pill Search Bar Filtering Recent Applications Table
+  document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("officerTableSearch");
+    const table = document.getElementById("recentApplicationsTable");
+    if (!searchInput || !table) return;
+
+    searchInput.addEventListener("input", function(e) {
+      const query = e.target.value.toLowerCase().trim();
+      const rows = table.querySelectorAll(".application-table-row");
+
+      rows.forEach(function(row) {
+        const text = row.innerText.toLowerCase();
+        if (!query || text.includes(query)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+  });
+
+  // 3. Mini Calendar Scroller & Document Checklist Initialization
+  document.addEventListener("DOMContentLoaded", function() {
+    initMiniCalendar();
+    initDocChecklist();
+  });
+
+  // Mini Calendar: Horizontal Day Scroller for Next 14 Days
+  function initMiniCalendar() {
+    const scroller = document.getElementById("emiCalendarScroller");
+    if (!scroller) return;
+
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const today = new Date();
+    let html = "";
+
+    for (let i = 0; i < 14; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() + i);
+      const dayName = days[d.getDay()];
+      const dateNum = d.getDate();
+      const isInitialActive = (i === 0);
+
+      html += `
+        <button type="button" 
+                class="emi-calendar-day flex flex-col items-center justify-center min-w-[44px] h-[58px] p-1.5 transition-all duration-200 cursor-pointer 
+                ${isInitialActive 
+                  ? 'bg-[#ec4899] text-white rounded-xl -translate-y-1 shadow-md shadow-pink-500/30' 
+                  : 'text-[#64748b] hover:text-[#1e293b] hover:bg-slate-100 rounded-xl'}"
+                data-index="${i}">
+          <span class="text-[9px] font-bold uppercase tracking-wider">${dayName}</span>
+          <span class="text-sm font-extrabold mt-0.5 leading-none">${dateNum}</span>
+        </button>
+      `;
+    }
+
+    scroller.innerHTML = html;
+
+    // Attach click listener to set active day
+    const dayButtons = scroller.querySelectorAll(".emi-calendar-day");
+    dayButtons.forEach((btn) => {
+      btn.addEventListener("click", function() {
+        dayButtons.forEach((b) => {
+          b.className = "emi-calendar-day flex flex-col items-center justify-center min-w-[44px] h-[58px] p-1.5 transition-all duration-200 cursor-pointer text-[#64748b] hover:text-[#1e293b] hover:bg-slate-100 rounded-xl";
+        });
+        this.className = "emi-calendar-day flex flex-col items-center justify-center min-w-[44px] h-[58px] p-1.5 transition-all duration-200 cursor-pointer bg-[#ec4899] text-white rounded-xl -translate-y-1 shadow-md shadow-pink-500/30";
+      });
+    });
+  }
+
+  // Document Checklist Todo List with localStorage Persistence
+  function initDocChecklist() {
+    const checklist = document.getElementById("documentChecklist");
+    const resetBtn = document.getElementById("resetChecklistBtn");
+    if (!checklist) return;
+
+    const STORAGE_KEY = "loan_officer_doc_checklist";
+    let state = {};
+
+    try {
+      state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    } catch (e) {
+      state = {};
+    }
+
+    const checkboxes = checklist.querySelectorAll(".doc-checkbox");
+
+    // Restore saved state
+    checkboxes.forEach((cb) => {
+      const docKey = cb.getAttribute("data-doc");
+      const label = cb.closest("label")?.querySelector(".doc-label");
+
+      if (state[docKey]) {
+        cb.checked = true;
+        if (label) {
+          label.classList.add("line-through", "text-[#64748b]");
+          label.classList.remove("text-[#1e293b]");
+        }
+      }
+
+      // Change event
+      cb.addEventListener("change", function() {
+        state[docKey] = this.checked;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.warn("localStorage unavailable:", e);
+        }
+
+        if (label) {
+          if (this.checked) {
+            label.classList.add("line-through", "text-[#64748b]");
+            label.classList.remove("text-[#1e293b]");
+          } else {
+            label.classList.remove("line-through", "text-[#64748b]");
+            label.classList.add("text-[#1e293b]");
+          }
+        }
+      });
+    });
+
+    // Reset button
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function() {
+        checkboxes.forEach((cb) => {
+          cb.checked = false;
+          const label = cb.closest("label")?.querySelector(".doc-label");
+          if (label) {
+            label.classList.remove("line-through", "text-[#64748b]");
+            label.classList.add("text-[#1e293b]");
+          }
+        });
+        state = {};
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch (e) {}
+      });
+    }
+  }
+</script>
+{% endblock %}

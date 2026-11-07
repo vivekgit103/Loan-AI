@@ -1,0 +1,22 @@
+{
+  "name": "loaniq-trustscore-ai",
+  "version": "1.0.0",
+  "description": "LoanIQ - AI-Based Loan Eligibility & Risk Assessment System",
+  "main": "run.js",
+  "scripts": {
+    "dev": "node run.js dev",
+    "start": "node run.js start",
+    "test": "node run.js test",
+    "train": "node run.js train"
+  },
+  "keywords": [
+    "loaniq",
+    "flask",
+    "scikit-learn",
+    "credit-risk",
+    "trustscore"
+  ],
+  "author": "LoanIQ Team",
+  "license": "ISC"
+}
+

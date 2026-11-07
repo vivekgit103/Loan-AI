@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Underwriting Decision #{{ app.id }} | LoanIQ{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+
+  <!-- Top Action Navigation & Breadcrumbs -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
+    <div class="flex items-center space-x-2 text-xs font-semibold text-[#64748b]">
+      <a href="{{ url_for('dashboard') }}" class="hover:text-[#0d6efd] transition-colors">Dashboard</a>
+      <span>&rsaquo;</span>
+      <a href="{{ url_for('list_applications') }}" class="hover:text-[#0d6efd] transition-colors">Applications</a>
+      <span>&rsaquo;</span>
+      <span class="text-[#1e293b]">Decision #{{ app.id }}</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center space-x-3">
+      <a href="{{ url_for('dashboard') }}" 
+         class="inline-flex items-center space-x-1.5 bg-white border border-[#f3f4f6] hover:bg-slate-50 text-[#1e293b] text-xs font-bold px-3.5 py-2.5 rounded-[12px] shadow-sm transition-all duration-200">
+        <svg class="w-4 h-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span>Back to Dashboard</span>
+      </a>
+
+      <button onclick="window.print()" 
+              class="inline-flex items-center space-x-1.5 bg-white border border-[#f3f4f6] hover:bg-slate-50 text-[#1e293b] text-xs font-bold px-3.5 py-2.5 rounded-[12px] shadow-sm transition-all duration-200">
+        <svg class="w-4 h-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        <span>Print Report</span>
+      </button>
+
+      <a href="{{ url_for('apply_loan') }}" 
+         class="inline-flex items-center space-x-1.5 bg-[#0d6efd] hover:bg-[#0b5ed7] text-white text-xs font-bold px-4 py-2.5 rounded-[12px] shadow-cta hover:shadow-cta-hover transition-all duration-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>New Application</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 1. Top Card: Decision Badge, Applicant Name, Loan Amount, Tenure -->
+  <div class="app-card p-6 sm:p-8 relative overflow-hidden">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      
+      <div class="space-y-3">
+        <!-- Big Decision Badge -->
+        <div class="inline-flex items-center space-x-2 text-xs font-extrabold px-3.5 py-1.5 rounded-full uppercase tracking-wider
+          {% if app.decision == 'Approved' %}bg-[#ecfdf5] text-[#10b981] border border-emerald-200
+          {% elif app.decision == 'Review' %}bg-[#fff7ed] text-[#f97316] border border-orange-200
+          {% else %}bg-[#fdf2f8] text-[#ec4899] border border-pink-200{% endif %}">
+          <span class="w-2 h-2 rounded-full 
+            {% if app.decision == 'Approved' %}bg-[#10b981]
+            {% elif app.decision == 'Review' %}bg-[#f97316]
+            {% else %}bg-[#ec4899]{% endif %} animate-pulse"></span>
+          <span>
+            {% if app.decision == 'Approved' %}Approved
+            {% elif app.decision == 'Review' %}Manual Review
+            {% else %}Rejected{% endif %}
+          </span>
+        </div>
+
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1e293b] tracking-tight">
+            {{ app.name }}
+          </h1>
+          <p class="text-xs text-[#64748b] mt-1">
+            Application #{{ app.id }} &bull; Evaluated on {{ app.created_at }} &bull; CIBIL Bureau {{ app.credit_score }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Facility Terms Badge -->
+      <div class="bg-slate-50 border border-slate-200/80 rounded-[16px] p-4 text-left sm:text-right min-w-[220px]">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Evaluated Facility</span>
+        <div class="text-2xl font-black text-[#1e293b] mt-0.5">
+          ₹{{ "{:,.0f}".format(app.loan_amount) }}
+        </div>
+        <div class="text-xs font-bold text-[#0d6efd] mt-1">
+          {{ app.loan_type }} Loan &bull; {{ app.tenure_months }} Months
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. Risk Semicircle Gauge Card -->
+  <div class="app-card p-6 sm:p-8 flex flex-col items-center justify-center text-center space-y-4">
+    <div class="flex items-center space-x-2">
+      <span class="text-xs font-bold uppercase tracking-wider text-[#64748b]">Default Risk Probability Dial</span>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-[#1e293b]">Scikit-Learn ML</span>
+    </div>
+
+    <!-- Semicircle SVG Gauge with Animated Needle -->
+    <div class="relative w-64 h-36 flex items-end justify-center select-none">
+      <svg viewBox="0 0 200 115" class="w-full h-full overflow-visible">
+        
+        <!-- Semicircle Track Background (Grey) -->
+        <path d="M 20 100 A 80 80 0 0 1 180 100" 
+              fill="none" 
+              stroke="#f1f5f9" 
+              stroke-width="16" 
+              stroke-linecap="round" />
+
+        <!-- Zone 1: Low Risk (Green 0 - 15% PD -> 0 to 27 degrees) -->
+        <path d="M 20 100 A 80 80 0 0 1 45 43" 
+              fill="none" 
+              stroke="#10b981" 
+              stroke-width="16" 
+              stroke-linecap="round" />
+
+        <!-- Zone 2: Medium Risk (Orange 15% - 35% PD -> 27 to 63 degrees) -->
+        <path d="M 45 43 A 80 80 0 0 1 120 23" 
+              fill="none" 
+              stroke="#f97316" 
+              stroke-width="16" />
+
+        <!-- Zone 3: High Risk (Pink 35% - 100% PD -> 63 to 180 degrees) -->
+        <path d="M 120 23 A 80 80 0 0 1 180 100" 
+              fill="none" 
+              stroke="#ec4899" 
+              stroke-width="16" 
+              stroke-linecap="round" />
+
+        <!-- Center Hub Pin -->
+        <circle cx="100" cy="100" r="7" fill="#1e293b" />
+        <circle cx="100" cy="100" r="3" fill="#ffffff" />
+
+        <!-- Needle (Rotates from -90deg to +90deg based on PD) -->
+        {% set pd_val = app.pd if (app.pd is defined and app.pd is not none) else 0.0 %}
+        {# Map PD 0.0 -> -90 deg, PD 1.0 -> +90 deg #}
+        {% set angle = ((pd_val * 180.0) - 90.0) | round(1) %}
+        {% set bounded_angle = [-90.0, [angle, 90.0]|min]|max %}
+        <g id="gaugeNeedleGroup" 
+           style="transform-origin: 100px 100px; transform: rotate({{ bounded_angle }}deg); transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+          <polygon points="98,100 100,28 102,100" fill="#1e293b" />
+          <polygon points="99,35 100,24 101,35" fill="#f97316" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- PD Value & Zone Badges -->
+    <div class="space-y-1">
+      <div class="text-3xl font-black text-[#1e293b] tracking-tight">
+        {{ "%.1f"|format(app.pd * 100) }}% <span class="text-xs font-semibold text-[#64748b]">PD Score</span>
+      </div>
+      <p class="text-xs font-bold 
+        {% if app.pd < 0.15 %}text-[#10b981]
+        {% elif app.pd <= 0.35 %}text-[#f97316]
+        {% else %}text-[#ec4899]{% endif %}">
+        {% if app.pd < 0.15 %}Low Default Risk Tier (Prime Sanction)
+        {% elif app.pd <= 0.35 %}Moderate Default Risk Tier (Manual Review)
+        {% else %}Elevated Default Risk Tier (Policy Cutoff){% endif %}
+      </p>
+    </div>
+
+    <!-- Gauge Legend Color Zones -->
+    <div class="flex items-center space-x-6 pt-2 text-[11px] text-[#64748b]">
+      <div class="inline-flex items-center space-x-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>
+        <span>Low (&lt;15%)</span>
+      </div>
+      <div class="inline-flex items-center space-x-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#f97316]"></span>
+        <span>Medium (15–35%)</span>
+      </div>
+      <div class="inline-flex items-center space-x-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#ec4899]"></span>
+        <span>High (&gt;35%)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Four Mini Stat Cards: EMI, Interest Rate, Max Eligible Amount, FOIR % -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    
+    <!-- EMI -->
+    <div class="app-card p-5 space-y-2">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">Monthly Installment (EMI)</span>
+      <div class="text-2xl font-black text-[#0d6efd]">
+        ₹{{ "{:,.2f}".format(app.emi) }}
+      </div>
+      <p class="text-[11px] text-[#64748b]">Standard reducing-balance repayment</p>
+    </div>
+
+    <!-- Interest Rate -->
+    <div class="app-card p-5 space-y-2">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">Approved Interest Rate</span>
+      <div class="text-2xl font-black text-[#1e293b]">
+        {{ "%.2f"|format(app.interest_rate) }}% <span class="text-xs font-semibold text-[#64748b]">p.a.</span>
+      </div>
+      <p class="text-[11px] text-[#64748b]">Risk-adjusted benchmark spread</p>
+    </div>
+
+    <!-- Max Eligible Amount -->
+    <div class="app-card p-5 space-y-2">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">Max Permissible Limit</span>
+      <div class="text-2xl font-black text-[#10b981]">
+        ₹{{ "{:,.0f}".format(app.max_eligible) }}
+      </div>
+      <p class="text-[11px] text-[#64748b]">Cap based on 50% debt-service ceiling</p>
+    </div>
+
+    <!-- FOIR % -->
+    <div class="app-card p-5 space-y-2">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">Debt Ratio (FOIR / DTI)</span>
+      {% set foir_val = explanation.foir if (explanation and explanation.foir) else ((app.existing_emi + app.emi) / (app.monthly_income or 1) * 100) %}
+      <div class="text-2xl font-black 
+        {% if foir_val <= 40 %}text-[#10b981]
+        {% elif foir_val <= 65 %}text-[#f97316]
+        {% else %}text-[#ec4899]{% endif %}">
+        {{ "%.1f"|format(foir_val) }}%
+      </div>
+      <p class="text-[11px] text-[#64748b]">
+        {% if foir_val <= 40 %}Optimal debt burden
+        {% elif foir_val <= 65 %}Moderate debt service
+        {% else %}Exceeds 65% statutory ceiling{% endif %}
+      </p>
+    </div>
+
+  </div>
+
+  <!-- 4. "Why this decision" Card (Top 5 Factors + Hard-Rule Reasons Alert) -->
+  <div class="app-card p-6 sm:p-8 space-y-6">
+    
+    <div class="border-b border-[#f3f4f6] pb-3 flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-bold text-[#1e293b]">Why this decision was made (Model Explainability)</h2>
+        <p class="text-xs text-[#64748b]">Local linear log-odds feature attribution calculated via trained Logistic Regression weights</p>
+      </div>
+      <span class="text-[10px] font-bold text-[#0d6efd] bg-blue-50 px-2.5 py-1 rounded-full">XAI Attributions</span>
+    </div>
+
+    <!-- Hard-Rule Rejection Reasons Alert List (If Present) -->
+    {% if explanation.hard_reasons and explanation.hard_reasons|length > 0 %}
+      <div class="bg-rose-50 border border-rose-200 rounded-[16px] p-4 text-xs space-y-2">
+        <div class="flex items-center space-x-2 text-rose-700 font-bold">
+          <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>Statutory Underwriting Policy Violations:</span>
+        </div>
+        <ul class="list-disc list-inside space-y-1 text-rose-800 font-semibold pl-1">
+          {% for reason in explanation.hard_reasons %}
+            <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Top 5 Factors as Horizontal Bars (Green = reduces risk, Pink = increases risk) -->
+    <div class="space-y-4">
+      {% set factors = explanation.factors if (explanation and explanation.factors) else [] %}
+      {% if factors %}
+        
+        {# Find max absolute impact to normalize bar lengths #}
+        {% set max_impact = 1.0 %}
+        {% for f in factors %}
+          {% if f.impact|abs > max_impact %}
+            {% set max_impact = f.impact|abs %}
+          {% endif %}
+        {% endfor %}
+
+        {% for factor in factors[:5] %}
+          {% set bar_pct = ((factor.impact|abs / (max_impact or 1.0)) * 100) | round | int %}
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-[#1e293b] flex items-center space-x-2">
+                <span>{{ factor.label or factor.feature }}</span>
+              </span>
+              <span class="text-[11px] font-extrabold 
+                {% if factor.direction == 'reduces risk' %}text-[#10b981]
+                {% else %}text-[#ec4899]{% endif %}">
+                {% if factor.direction == 'reduces risk' %}
+                  &minus;{{ "%.3f"|format(factor.impact|abs) }} (Reduces Risk)
+                {% else %}
+                  +{{ "%.3f"|format(factor.impact|abs) }} (Increases Risk)
+                {% endif %}
+              </span>
+            </div>
+
+            <!-- Horizontal Bar Track -->
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-700 
+                {% if factor.direction == 'reduces risk' %}bg-[#10b981]
+                {% else %}bg-[#ec4899]{% endif %}"
+                style="width: {{ [bar_pct, 12] | max }}%;">
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+
+      {% else %}
+        <!-- Generic attribution fallback -->
+        <div class="space-y-3 text-xs">
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-bold text-[#1e293b]">
+              <span>CIBIL Credit Score ({{ app.credit_score }})</span>
+              <span class="text-[#10b981] font-extrabold">Reduces Risk</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="h-full rounded-full bg-[#10b981]" style="width: 82%;"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-bold text-[#1e293b]">
+              <span>Debt-To-Income Leverage</span>
+              <span class="text-[#f97316] font-extrabold">Moderate Factor</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="h-full rounded-full bg-[#f97316]" style="width: 54%;"></div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Explanatory note -->
+    <div class="pt-2 text-[11px] text-[#64748b]">
+      <strong>Underwriter Note:</strong> Green factors indicate positive credit mitigants that suppress default probability; pink factors represent elevated risk drivers contributing to log-odds default pressure.
+    </div>
+
+  </div>
+
+  <!-- 5. "AI Advisor" Card (Purple Accent) -->
+  <div class="app-card p-6 sm:p-8 border-purple-200/80 bg-gradient-to-br from-white via-purple-50/30 to-white space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-purple-100">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-[10px] bg-purple-100 text-[#a855f7] flex items-center justify-center font-bold text-xs shadow-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-[#1e293b]">Credit Officer & Borrower Advisory</h2>
+          <p class="text-[11px] text-[#64748b]">Underwriting rationale and credit improvement guidance</p>
+        </div>
+      </div>
+
+      <!-- Small "AI-generated" Label -->
+      <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-100 text-[#a855f7] border border-purple-200">
+        AI-generated
+      </span>
+    </div>
+
+    <!-- Advice Text Content -->
+    <div class="text-xs text-[#1e293b] leading-relaxed whitespace-pre-line space-y-3 font-medium">
+      {{ app.advice or "The applicant's financial profile demonstrates sound debt servicing capability. To enhance sanction headroom, maintain revolving utilization under 30% and ensure disciplined, on-time repayments across all credit lines." }}
+    </div>
+  </div>
+
+  <!-- 6. Footer Navigation Buttons (Centered) -->
+  <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 pb-8 no-print">
+    <a href="{{ url_for('dashboard') }}" 
+       class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-white border border-[#f3f4f6] hover:bg-slate-50 text-[#1e293b] text-xs font-bold px-6 py-3 rounded-[12px] shadow-sm transition-all duration-200">
+      <svg class="w-4 h-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+      <span>Back to Dashboard</span>
+    </a>
+
+    <button type="button" 
+            onclick="window.print()" 
+            class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-white border border-[#f3f4f6] hover:bg-slate-50 text-[#1e293b] text-xs font-bold px-6 py-3 rounded-[12px] shadow-sm transition-all duration-200">
+      <svg class="w-4 h-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+      </svg>
+      <span>Print Report</span>
+    </button>
+
+    <a href="{{ url_for('apply_loan') }}" 
+       class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-[#0d6efd] hover:bg-[#0b5ed7] text-white text-xs font-bold px-7 py-3 rounded-[12px] shadow-cta hover:shadow-cta-hover transition-all duration-200">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+      </svg>
+      <span>New Application</span>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

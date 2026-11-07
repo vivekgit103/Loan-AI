@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Application Registry | LoanIQ{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header & Breadcrumbs & Action Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center space-x-2 text-xs font-semibold text-[#64748b] mb-1">
+        <a href="{{ url_for('dashboard') }}" class="hover:text-[#0d6efd] transition-colors">Dashboard</a>
+        <span>&rsaquo;</span>
+        <span class="text-[#1e293b]">Applications Registry</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1e293b] tracking-tight">
+        Loan Application Registry
+      </h1>
+      <p class="text-xs text-[#64748b] mt-1">
+        Comprehensive repository of underwriting logs, bureau parameters, ML risk tiers, and sanction terms.
+      </p>
+    </div>
+
+    <!-- Right Quick Actions: CSV Export & New Application Button -->
+    <div class="flex items-center space-x-3">
+      <button type="button" 
+              id="exportCsvBtn"
+              class="inline-flex items-center space-x-2 bg-white hover:bg-slate-50 text-[#1e293b] text-xs font-bold px-4 py-2.5 rounded-[12px] border border-[#f3f4f6] shadow-sm hover:shadow transition-all duration-200">
+        <svg class="w-4 h-4 text-[#10b981]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Export CSV</span>
+      </button>
+
+      <a href="{{ url_for('apply_loan') }}" 
+         class="inline-flex items-center space-x-1.5 bg-[#0d6efd] hover:bg-[#0b5ed7] text-white text-xs font-bold px-4 py-2.5 rounded-[12px] shadow-cta hover:shadow-cta-hover transition-all duration-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>+ New Application</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls Card -->
+  <div class="app-card p-4 sm:p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+    
+    <!-- Search Bar with Icon -->
+    <div class="relative flex-1 max-w-md">
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+        <svg class="w-4 h-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <input type="text" 
+             id="tableSearchInput" 
+             placeholder="Search by applicant name, loan type, employment..." 
+             class="w-full bg-slate-50 border border-slate-200 rounded-[12px] pl-10 pr-4 py-2 text-xs text-[#1e293b] placeholder-[#64748b] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0d6efd] transition-all">
+    </div>
+
+    <!-- Filter Pills (Decision & Risk Band) -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Decision Filter Select -->
+      <div class="flex items-center space-x-1.5">
+        <span class="text-[11px] font-bold text-[#64748b]">Decision:</span>
+        <select id="decisionFilter" 
+                class="bg-white border border-slate-200 text-xs font-bold text-[#1e293b] rounded-[10px] px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0d6efd]">
+          <option value="all">All Decisions</option>
+          <option value="approved">Approved</option>
+          <option value="review">Manual Review</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      <!-- Risk Band Filter Select -->
+      <div class="flex items-center space-x-1.5">
+        <span class="text-[11px] font-bold text-[#64748b]">Risk:</span>
+        <select id="riskFilter" 
+                class="bg-white border border-slate-200 text-xs font-bold text-[#1e293b] rounded-[10px] px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0d6efd]">
+          <option value="all">All Risk Tiers</option>
+          <option value="low">Low Risk (&lt;15% PD)</option>
+          <option value="medium">Medium Risk (15-35% PD)</option>
+          <option value="high">High Risk (&gt;35% PD)</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Full-Width Applications Table Card -->
+  <div class="app-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table id="applicationsRegistryTable" class="w-full text-left text-xs border-collapse">
+        <thead class="bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-[#64748b] border-b border-[#f3f4f6] select-none">
+          <tr>
+            <th class="py-4 px-6 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="id">
+              <div class="flex items-center space-x-1">
+                <span>ID / Applicant</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-4 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="facility">
+              <div class="flex items-center space-x-1">
+                <span>Loan Facility</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-4 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="amount">
+              <div class="flex items-center space-x-1">
+                <span>Amount (₹)</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-4 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="income">
+              <div class="flex items-center space-x-1">
+                <span>Monthly Income</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-4 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="cibil">
+              <div class="flex items-center space-x-1">
+                <span>CIBIL Score</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-4 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="risk">
+              <div class="flex items-center space-x-1">
+                <span>Risk (PD)</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-4 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="decision">
+              <div class="flex items-center space-x-1">
+                <span>Decision</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-4 cursor-pointer hover:text-[#0d6efd] transition-colors" data-sort="date">
+              <div class="flex items-center space-x-1">
+                <span>Date Evaluated</span>
+                <span class="sort-indicator text-slate-300">↕</span>
+              </div>
+            </th>
+            <th class="py-4 px-6 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#f3f4f6]" id="applicationsTableBody">
+          {% if applications %}
+            {% for app in applications %}
+              <tr class="hover:bg-slate-50 transition-colors app-data-row cursor-pointer"
+                  onclick="handleRowClick(event, '{{ url_for('view_result', application_id=app.id) }}')"
+                  data-id="{{ app.id }}"
+                  data-name="{{ app.name|lower }}"
+                  data-search="{{ app.name|lower }} {{ app.loan_type|lower }} {{ app.employment_type|lower }}"
+                  data-decision="{{ app.decision|lower }}"
+                  data-risk="{% if 'low' in app.risk_band|lower %}low{% elif 'high' in app.risk_band|lower %}high{% else %}medium{% endif %}"
+                  data-val-id="{{ app.id }}"
+                  data-val-amount="{{ app.loan_amount }}"
+                  data-val-income="{{ app.monthly_income }}"
+                  data-val-cibil="{{ app.credit_score }}"
+                  data-val-pd="{{ app.pd }}"
+                  data-val-decision="{{ app.decision }}"
+                  data-val-date="{{ app.created_at }}">
+
+                <!-- ID & Applicant -->
+                <td class="py-4 px-6">
+                  <div class="flex items-center space-x-2.5">
+                    <span class="font-mono text-xs font-bold text-[#64748b]">#{{ app.id }}</span>
+                    <div>
+                      <a href="{{ url_for('view_result', application_id=app.id) }}" 
+                         class="font-bold text-[#1e293b] hover:text-[#0d6efd] transition-colors">
+                        {{ app.name }}
+                      </a>
+                      <div class="text-[11px] text-[#64748b]">
+                        Age {{ app.age }} &bull; {{ app.employment_type }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Loan Facility -->
+                <td class="py-4 px-4">
+                  <div class="font-bold text-[#1e293b]">{{ app.loan_type }} Loan</div>
+                  <div class="text-[11px] text-[#64748b]">{{ app.tenure_months }} mos tenure</div>
+                </td>
+
+                <!-- Amount -->
+                <td class="py-4 px-4 font-bold text-[#1e293b]">
+                  ₹{{ "{:,.0f}".format(app.loan_amount) }}
+                </td>
+
+                <!-- Monthly Income -->
+                <td class="py-4 px-4 font-semibold text-[#1e293b]">
+                  ₹{{ "{:,.0f}".format(app.monthly_income) }}
+                </td>
+
+                <!-- CIBIL Score Badge -->
+                <td class="py-4 px-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold 
+                    {% if app.credit_score >= 750 %}bg-emerald-50 text-[#10b981]
+                    {% elif app.credit_score >= 650 %}bg-blue-50 text-[#0d6efd]
+                    {% elif app.credit_score >= 550 %}bg-orange-50 text-[#f97316]
+                    {% else %}bg-pink-50 text-[#ec4899]{% endif %}">
+                    {{ app.credit_score }}
+                  </span>
+                </td>
+
+                <!-- Risk Band (PD) -->
+                <td class="py-4 px-4">
+                  <div class="font-bold text-xs 
+                    {% if app.pd < 0.15 %}text-[#10b981]
+                    {% elif app.pd <= 0.35 %}text-[#f97316]
+                    {% else %}text-[#ec4899]{% endif %}">
+                    {{ "%.1f"|format(app.pd * 100) }}% PD
+                  </div>
+                  <div class="text-[10px] text-[#64748b]">{{ app.risk_band }}</div>
+                </td>
+
+                <!-- Decision Badge -->
+                <td class="py-4 px-4">
+                  {% if app.decision == 'Approved' %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-[#10b981] border border-emerald-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#10b981] mr-1.5"></span>Approved
+                    </span>
+                  {% elif app.decision == 'Review' %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#fff7ed] text-[#f97316] border border-orange-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#f97316] mr-1.5"></span>Review
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#fdf2f8] text-[#ec4899] border border-pink-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#ec4899] mr-1.5"></span>Rejected
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Evaluated Date -->
+                <td class="py-4 px-4 text-[11px] text-[#64748b]">
+                  {{ app.created_at[:10] }}
+                </td>
+
+                <!-- Action View Details Link -->
+                <td class="py-4 px-6 text-right" onclick="event.stopPropagation()">
+                  <a href="{{ url_for('view_result', application_id=app.id) }}" 
+                     class="inline-flex items-center space-x-1 text-[11px] font-bold text-[#0d6efd] hover:text-[#0b5ed7] bg-[#edf5ff] hover:bg-blue-100/70 px-3 py-1.5 rounded-[8px] transition-colors">
+                    <span>View</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
+                </td>
+
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" class="py-12 px-6 text-center text-[#64748b]">
+                <p class="font-bold text-sm text-[#1e293b]">No Applications Registered</p>
+                <p class="text-xs mt-1">Submit your first application to initiate underwriting logs.</p>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- No Results Matching Filters State (Hidden by default) -->
+    <div id="noMatchingRows" class="hidden py-12 px-6 text-center text-[#64748b]">
+      <svg class="w-10 h-10 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <p class="text-sm font-bold text-[#1e293b]">No applications matching filter criteria</p>
+      <p class="text-xs mt-0.5">Try clearing search keywords or selecting all decisions.</p>
+    </div>
+
+    <!-- Table Footer / Count -->
+    <div class="px-6 py-4 bg-slate-50/50 border-t border-[#f3f4f6] flex items-center justify-between text-xs text-[#64748b]">
+      <span>Showing <strong id="displayedRowsCount" class="text-[#1e293b]">{{ applications|length }}</strong> applications</span>
+      <span>Click any row or header to inspect sanction report or sort data</span>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Handle Row Click to navigate to /result/<id>
+  function handleRowClick(event, targetUrl) {
+    // Avoid double navigation if user clicks a link or button directly
+    if (event.target.closest("a") || event.target.closest("button")) return;
+    window.location.href = targetUrl;
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    const tableBody = document.getElementById("applicationsTableBody");
+    const searchInput = document.getElementById("tableSearchInput");
+    const decisionFilter = document.getElementById("decisionFilter");
+    const riskFilter = document.getElementById("riskFilter");
+    const displayedCount = document.getElementById("displayedRowsCount");
+    const noRowsMsg = document.getElementById("noMatchingRows");
+    const exportBtn = document.getElementById("exportCsvBtn");
+
+    const rows = Array.from(tableBody.querySelectorAll(".app-data-row"));
+
+    // --------------------------------------------------------------------------
+    // 1. Live Multi-Criteria Search & Filter
+    // --------------------------------------------------------------------------
+    function filterTable() {
+      const q = (searchInput?.value || "").toLowerCase().trim();
+      const dec = (decisionFilter?.value || "all").toLowerCase();
+      const rsk = (riskFilter?.value || "all").toLowerCase();
+
+      let visible = 0;
+
+      rows.forEach((row) => {
+        const text = row.getAttribute("data-search") || "";
+        const rowDec = row.getAttribute("data-decision") || "";
+        const rowRsk = row.getAttribute("data-risk") || "";
+
+        const matchesQuery = !q || text.includes(q);
+        const matchesDecision = (dec === "all") || (rowDec === dec);
+        const matchesRisk = (rsk === "all") || (rowRsk === rsk);
+
+        if (matchesQuery && matchesDecision && matchesRisk) {
+          row.style.display = "";
+          visible++;
+        } else {
+          row.style.display = "none";
+        }
+      });
+
+      if (displayedCount) displayedCount.textContent = visible;
+      if (noRowsMsg) {
+        noRowsMsg.classList.toggle("hidden", visible > 0);
+      }
+    }
+
+    if (searchInput) searchInput.addEventListener("input", filterTable);
+    if (decisionFilter) decisionFilter.addEventListener("change", filterTable);
+    if (riskFilter) riskFilter.addEventListener("change", filterTable);
+
+    // --------------------------------------------------------------------------
+    // 2. Sortable Columns Handler
+    // --------------------------------------------------------------------------
+    let currentSortColumn = null;
+    let sortAscending = true;
+
+    const sortHeaders = document.querySelectorAll("th[data-sort]");
+    sortHeaders.forEach((th) => {
+      th.addEventListener("click", () => {
+        const sortKey = th.getAttribute("data-sort");
+        if (currentSortColumn === sortKey) {
+          sortAscending = !sortAscending;
+        } else {
+          currentSortColumn = sortKey;
+          sortAscending = true;
+        }
+
+        // Reset all indicators
+        sortHeaders.forEach((h) => {
+          const ind = h.querySelector(".sort-indicator");
+          if (ind) ind.textContent = "↕";
+          h.classList.remove("text-[#0d6efd]");
+        });
+
+        // Set active header
+        const activeInd = th.querySelector(".sort-indicator");
+        if (activeInd) activeInd.textContent = sortAscending ? "▲" : "▼";
+        th.classList.add("text-[#0d6efd]");
+
+        // Perform Sort
+        rows.sort((a, b) => {
+          let valA, valB;
+
+          switch (sortKey) {
+            case "id":
+              valA = parseInt(a.getAttribute("data-val-id") || 0);
+              valB = parseInt(b.getAttribute("data-val-id") || 0);
+              break;
+            case "facility":
+              valA = a.children[1].innerText.toLowerCase();
+              valB = b.children[1].innerText.toLowerCase();
+              break;
+            case "amount":
+              valA = parseFloat(a.getAttribute("data-val-amount") || 0);
+              valB = parseFloat(b.getAttribute("data-val-amount") || 0);
+              break;
+            case "income":
+              valA = parseFloat(a.getAttribute("data-val-income") || 0);
+              valB = parseFloat(b.getAttribute("data-val-income") || 0);
+              break;
+            case "cibil":
+              valA = parseInt(a.getAttribute("data-val-cibil") || 0);
+              valB = parseInt(b.getAttribute("data-val-cibil") || 0);
+              break;
+            case "risk":
+              valA = parseFloat(a.getAttribute("data-val-pd") || 0);
+              valB = parseFloat(b.getAttribute("data-val-pd") || 0);
+              break;
+            case "decision":
+              valA = a.getAttribute("data-val-decision") || "";
+              valB = b.getAttribute("data-val-decision") || "";
+              break;
+            case "date":
+              valA = a.getAttribute("data-val-date") || "";
+              valB = b.getAttribute("data-val-date") || "";
+              break;
+            default:
+              return 0;
+          }
+
+          if (valA < valB) return sortAscending ? -1 : 1;
+          if (valA > valB) return sortAscending ? 1 : -1;
+          return 0;
+        });
+
+        // Re-append sorted rows to table body
+        rows.forEach((r) => tableBody.appendChild(r));
+      });
+    });
+
+    // --------------------------------------------------------------------------
+    // 3. Client-Side CSV Generator & Downloader
+    // --------------------------------------------------------------------------
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function() {
+        const headers = ["ID", "Applicant Name", "Loan Type", "Loan Amount (INR)", "Monthly Income (INR)", "CIBIL Score", "Default Probability (PD)", "Risk Band", "Decision", "Date Evaluated"];
+        const csvRows = [headers.join(",")];
+
+        rows.forEach((r) => {
+          // Export visible (or all) rows
+          if (r.style.display !== "none") {
+            const id = r.getAttribute("data-val-id") || "";
+            const name = `"${(r.querySelector("a")?.innerText || "").replace(/"/g, '""')}"`;
+            const type = `"${(r.children[1]?.querySelector(".font-bold")?.innerText || "").replace(/"/g, '""')}"`;
+            const amount = r.getAttribute("data-val-amount") || "";
+            const income = r.getAttribute("data-val-income") || "";
+            const cibil = r.getAttribute("data-val-cibil") || "";
+            const pd = r.getAttribute("data-val-pd") || "";
+            const risk = `"${r.getAttribute("data-risk") || ""}"`;
+            const decision = `"${r.getAttribute("data-val-decision") || ""}"`;
+            const date = `"${r.getAttribute("data-val-date") || ""}"`;
+
+            csvRows.push([id, name, type, amount, income, cibil, pd, risk, decision, date].join(","));
+          }
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvRows.join("\n"));
+        const downloadLink = document.createElement("a");
+        downloadLink.setAttribute("href", csvContent);
+        downloadLink.setAttribute("download", `loaniq_applications_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      });
+    }
+
+  });
+</script>
+{% endblock %}
